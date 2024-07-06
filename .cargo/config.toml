@@ -4,7 +4,7 @@ target = "riscv32imc-esp-espidf"
 [target.riscv32imc-esp-espidf]
 linker = "ldproxy"
 # runner = "espflash --monitor" # Select this runner for espflash v1.x.x
-runner = "espflash flash --monitor" # --baud 921600 --chip esp32c3 --flash-size 4mb --partition-table custom_partitions.csv" # Select this runner for espflash v2.x.x
+runner = "espflash flash --monitor" # Select this runner for espflash v2.x.x
 rustflags = [ "--cfg",  "espidf_time64"] # Extending time_t for ESP IDF 5: https://github.com/esp-rs/rust/issues/110
 
 [unstable]
