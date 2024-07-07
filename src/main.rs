@@ -1,4 +1,3 @@
-use std::net::Ipv4Addr;
 use std::str::FromStr;
 use std::sync::Mutex;
 
@@ -8,30 +7,23 @@ use esp_idf_hal::adc::{attenuation, Adc};
 use esp_idf_hal::delay::FreeRtos;
 use esp_idf_hal::gpio::{self, ADCPin, Output, PinDriver};
 use esp_idf_hal::io::Write;
-use esp_idf_hal::modem::Modem;
-use esp_idf_hal::peripheral::Peripheral;
 use esp_idf_hal::peripherals::Peripherals;
-use esp_idf_hal::sys::{adc_atten_t, esp_deep_sleep, esp_wifi_set_country, wifi_country_t};
-use esp_idf_svc::eventloop::EspSystemEventLoop;
-use esp_idf_svc::hal::sys::esp;
+use esp_idf_hal::sys::{adc_atten_t, esp_deep_sleep};
 use esp_idf_svc::http::{self, server::EspHttpServer, Method};
-use esp_idf_svc::ipv4::{self, Mask, Subnet};
-use esp_idf_svc::netif::{EspNetif, NetifConfiguration, NetifStack};
-use esp_idf_svc::nvs::EspDefaultNvsPartition;
-use esp_idf_svc::wifi::{
-    AccessPointConfiguration, AuthMethod, BlockingWifi, ClientConfiguration, Configuration,
-    EspWifi, WifiDriver,
-};
+use esp_idf_svc::wifi::{BlockingWifi, EspWifi};
 use log::info;
 use main_configuration::MainConfiguration;
 use moisture_sensor::MoistureSensor;
 use post_data::PostData;
 
 mod adc_helper;
+mod configuration;
 mod main_configuration;
 mod moisture_sensor;
 mod post_data;
 mod string_error;
+mod template_helper;
+mod wifi_helper;
 
 // const V_HIGH_MOIST: f32 = 1.26;
 // const V_LOW_MOIST: f32 = 2.55;
@@ -39,30 +31,9 @@ mod string_error;
 const MIN_BAT_VOLT: f32 = 3.2;
 const MAX_BAT_VOLT: f32 = 4.2;
 
-static INDEX_HTML: &str = include_str!("settings_page.html");
-
 struct OnBoardLed<'a> {
     orange: PinDriver<'a, gpio::Gpio18, Output>,
     white: PinDriver<'a, gpio::Gpio19, Output>,
-}
-
-fn template_index(main_config: &MainConfiguration, error_message: Option<String>) -> String {
-    let mut template = INDEX_HTML.to_string();
-
-    template = template.replace("{SSID}", &main_config.get_ssid());
-    template = template.replace("{NAME}", &main_config.get_name());
-    template = template.replace("{ID}", &format!("{}", &main_config.get_id()));
-    template = template.replace(
-        "{VHIGH_MOIST}",
-        &format!("{}", &main_config.get_vhigh_moisture()),
-    );
-    template = template.replace(
-        "{VLOW_MOIST}",
-        &format!("{}", &main_config.get_vlow_moisture()),
-    );
-    template = template.replace("{ERROR_MSG}", &error_message.unwrap_or("".to_string()));
-
-    template
 }
 
 fn get_batt_percentage(voltage: f32) -> f32 {
@@ -74,100 +45,6 @@ fn get_batt_percentage(voltage: f32) -> f32 {
 
     let slope: f32 = 100.0 / (MAX_BAT_VOLT - MIN_BAT_VOLT);
     slope * (voltage - MIN_BAT_VOLT)
-}
-
-fn connect_wifi<'a>(
-    config: &MainConfiguration,
-    modem: impl Peripheral<P = Modem> + 'a,
-) -> anyhow::Result<BlockingWifi<EspWifi<'a>>> {
-    let wifi_configuration: Configuration = Configuration::Client(ClientConfiguration {
-        ssid: config.get_ssid().as_str().try_into().unwrap(),
-        bssid: None,
-        auth_method: AuthMethod::WPA2Personal,
-        password: config.get_passphrase().as_str().try_into().unwrap(),
-        channel: None,
-    });
-
-    let sys_loop = EspSystemEventLoop::take()?;
-    let nvs = EspDefaultNvsPartition::take()?;
-
-    let mut wifi = BlockingWifi::wrap(EspWifi::new(modem, sys_loop.clone(), Some(nvs))?, sys_loop)?;
-
-    wifi.set_configuration(&wifi_configuration)?;
-
-    wifi.start()?;
-    info!("Wifi started");
-
-    wifi.connect()?;
-    info!("Wifi connected");
-
-    wifi.wait_netif_up()?;
-    info!("Wifi netif up");
-
-    Ok(wifi)
-}
-
-fn create_ap<'a>(
-    modem: impl Peripheral<P = Modem> + 'a,
-) -> anyhow::Result<BlockingWifi<EspWifi<'a>>> {
-    let sys_loop = EspSystemEventLoop::take()?;
-    let nvs = EspDefaultNvsPartition::take()?;
-
-    let wifi_drv = WifiDriver::new(modem, sys_loop.clone(), Some(nvs))?;
-    let wifi_esp = EspWifi::wrap_all(
-        wifi_drv,
-        EspNetif::new(NetifStack::Sta)?,
-        EspNetif::new_with_conf(&NetifConfiguration {
-            ip_configuration: ipv4::Configuration::Router(ipv4::RouterConfiguration {
-                subnet: Subnet {
-                    gateway: Ipv4Addr::from_str("192.168.70.1")?,
-                    mask: Mask(24),
-                },
-                ..Default::default()
-            }),
-            ..NetifConfiguration::wifi_default_router()
-        })?,
-    )?;
-
-    let mut wifi = BlockingWifi::wrap(wifi_esp, sys_loop)?;
-
-    let cc = wifi_country_t {
-        cc: [b'F' as i8, b'R' as i8, 0 as i8],
-        schan: 1,
-        nchan: 14,
-        max_tx_power: 80,
-        ..Default::default()
-    };
-
-    esp!(unsafe { esp_wifi_set_country(&cc) })?;
-
-    let wifi_configuration = Configuration::Mixed(
-        ClientConfiguration {
-            ..Default::default()
-        },
-        AccessPointConfiguration {
-            ssid: "ESP Config".try_into().unwrap(),
-            ssid_hidden: false,
-            auth_method: AuthMethod::None,
-            max_connections: 5,
-            channel: 11,
-            ..Default::default()
-        },
-    );
-    // let wifi_configuration = Configuration::AccessPoint(AccessPointConfiguration {
-    //     ssid: "ESP Config".try_into().unwrap(),
-    //     ssid_hidden: false,
-    //     auth_method: AuthMethod::None,
-    //     max_connections: 5,
-    //     channel: 11,
-    //     ..Default::default()
-    // });
-
-    wifi.set_configuration(&wifi_configuration)?;
-    wifi.start()?;
-    // wifi.wait_netif_up()?;
-
-    Ok(wifi)
 }
 
 fn main() -> anyhow::Result<()> {
@@ -197,10 +74,10 @@ fn main() -> anyhow::Result<()> {
     FreeRtos::delay_ms(1000);
 
     if button_settings.is_high() {
-        let _wifi = connect_wifi(&main_config, peripherals.modem)?;
+        let _wifi = wifi_helper::connect_wifi(&main_config, peripherals.modem)?;
         main_sensor(leds, main_config, adc_helper)?;
     } else {
-        let wifi = create_ap(peripherals.modem)?;
+        let wifi = wifi_helper::create_ap(peripherals.modem)?;
         main_settings(main_config, leds, wifi)?
     }
 
@@ -228,7 +105,9 @@ fn main_settings(
         info!("Scan result: {:?}", scan_result);
 
         req.into_ok_response()?
-            .write_all(template_index(&mutex_config.lock().unwrap(), None).as_bytes())
+            .write_all(
+                template_helper::template_moisture(&mutex_config.lock().unwrap(), None).as_bytes(),
+            )
             .map(|_| ())
     })?;
 
@@ -253,40 +132,28 @@ fn main_settings(
                         PostData::from_string(String::from_utf8(buffer[0..bytes_read].to_vec())?);
                     let mut mainconfig_lock = mutex_config.lock().unwrap();
 
-                    if post_data.is_key_exists("ssid") {
-                        mainconfig_lock.set_ssid(post_data.read_value("ssid").unwrap().as_str())?;
-                    }
+                    for elem in configuration::MAP_NVS_FORM {
+                        if post_data.is_key_exists(elem.form_name) {
+                            let data = post_data.read_value(&elem.form_name).unwrap();
 
-                    if post_data.is_key_exists("pass") {
-                        mainconfig_lock
-                            .set_passphrase(post_data.read_value("pass").unwrap().as_str())?;
-                    }
+                            match elem.data_type {
+                                configuration::MapFormType::String => {
+                                    mainconfig_lock.store_string(&elem.nvs_key, data.as_str())?
+                                }
 
-                    if post_data.is_key_exists("name") {
-                        mainconfig_lock.set_name(post_data.read_value("name").unwrap().as_str())?;
-                    }
+                                configuration::MapFormType::Float => mainconfig_lock.store_float(
+                                    &elem.nvs_key,
+                                    f32::from_str(data.as_str()).unwrap(),
+                                )?,
 
-                    if post_data.is_key_exists("id") {
-                        mainconfig_lock.set_id(
-                            u32::from_str_radix(post_data.read_value("id").unwrap().as_str(), 10)
-                                .unwrap_or(0),
-                        )?;
+                                configuration::MapFormType::Unsigned => mainconfig_lock
+                                    .store_unsigned(
+                                        &elem.nvs_key,
+                                        u32::from_str(data.as_str()).unwrap(),
+                                    )?,
+                            };
+                        }
                     }
-
-                    if post_data.is_key_exists("vhigh_moist") {
-                        mainconfig_lock.set_vhigh_moisture(
-                            f32::from_str(post_data.read_value("vhigh_moist").unwrap().as_str())
-                                .unwrap_or(0.0),
-                        )?;
-                    }
-
-                    if post_data.is_key_exists("vlow_moist") {
-                        mainconfig_lock.set_vlow_moisture(
-                            f32::from_str(post_data.read_value("vlow_moist").unwrap().as_str())
-                                .unwrap_or(0.0),
-                        )?;
-                    }
-
                     error_message = "Save successfully!".to_string();
                 }
                 Err(_) => {
@@ -296,7 +163,8 @@ fn main_settings(
         }
 
         req.into_ok_response()?.write_all(
-            template_index(&mutex_config.lock().unwrap(), Some(error_message)).as_bytes(),
+            template_helper::template_moisture(&mutex_config.lock().unwrap(), Some(error_message))
+                .as_bytes(),
         )?;
         Ok(())
     })?;
