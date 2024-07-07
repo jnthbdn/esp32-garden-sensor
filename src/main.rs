@@ -141,18 +141,31 @@ fn create_ap<'a>(
 
     esp!(unsafe { esp_wifi_set_country(&cc) })?;
 
-    let wifi_configuration = Configuration::AccessPoint(AccessPointConfiguration {
-        ssid: "ESP Config".try_into().unwrap(),
-        ssid_hidden: false,
-        auth_method: AuthMethod::None,
-        max_connections: 5,
-        channel: 11,
-        ..Default::default()
-    });
+    let wifi_configuration = Configuration::Mixed(
+        ClientConfiguration {
+            ..Default::default()
+        },
+        AccessPointConfiguration {
+            ssid: "ESP Config".try_into().unwrap(),
+            ssid_hidden: false,
+            auth_method: AuthMethod::None,
+            max_connections: 5,
+            channel: 11,
+            ..Default::default()
+        },
+    );
+    // let wifi_configuration = Configuration::AccessPoint(AccessPointConfiguration {
+    //     ssid: "ESP Config".try_into().unwrap(),
+    //     ssid_hidden: false,
+    //     auth_method: AuthMethod::None,
+    //     max_connections: 5,
+    //     channel: 11,
+    //     ..Default::default()
+    // });
 
     wifi.set_configuration(&wifi_configuration)?;
     wifi.start()?;
-    wifi.wait_netif_up()?;
+    // wifi.wait_netif_up()?;
 
     Ok(wifi)
 }
@@ -187,17 +200,22 @@ fn main() -> anyhow::Result<()> {
         let _wifi = connect_wifi(&main_config, peripherals.modem)?;
         main_sensor(leds, main_config, adc_helper)?;
     } else {
-        let _wifi = create_ap(peripherals.modem)?;
-        main_settings(main_config, leds)?
+        let wifi = create_ap(peripherals.modem)?;
+        main_settings(main_config, leds, wifi)?
     }
 
     Ok(())
 }
 
-fn main_settings(main_config: MainConfiguration, mut leds: OnBoardLed) -> anyhow::Result<()> {
+fn main_settings(
+    main_config: MainConfiguration,
+    mut leds: OnBoardLed,
+    wifi: BlockingWifi<EspWifi>,
+) -> anyhow::Result<()> {
     leds.white.set_high()?;
 
     let mutex_config = Mutex::new(main_config);
+    let mutex_wifi = Mutex::new(wifi);
 
     let mut server = EspHttpServer::new(&http::server::Configuration {
         stack_size: 10240,
@@ -205,6 +223,10 @@ fn main_settings(main_config: MainConfiguration, mut leds: OnBoardLed) -> anyhow
     })?;
 
     server.fn_handler("/", Method::Get, |req| {
+        let scan_result = mutex_wifi.lock().unwrap().scan();
+
+        info!("Scan result: {:?}", scan_result);
+
         req.into_ok_response()?
             .write_all(template_index(&mutex_config.lock().unwrap(), None).as_bytes())
             .map(|_| ())
