@@ -9,12 +9,13 @@ static IS_NVS_TAKEN: AtomicBool = AtomicBool::new(false);
 const PARTITION_NAME: &str = "config";
 const NAMESPACE: &str = "config";
 
-const KEY_SSID: &str = "SSID";
-const KEY_PASSPHRASE: &str = "PASS";
-const KEY_VHIGH: &str = "VHIGH";
-const KEY_VLOW: &str = "VLOW";
-const KEY_ID: &str = "ID";
-const KEY_NAME: &str = "NAME";
+pub const KEY_SSID: &str = "SSID";
+pub const KEY_PASSPHRASE: &str = "PASS";
+pub const KEY_ID: &str = "ID";
+pub const KEY_NAME: &str = "NAME";
+
+pub const KEY_VHIGH: &str = "VHIGH";
+pub const KEY_VLOW: &str = "VLOW";
 
 pub struct MainConfiguration {
     nvs: EspNvs<NvsCustom>,
@@ -92,13 +93,13 @@ impl MainConfiguration {
             .map_err(|e| StringEspError("Failed store ID", e))
     }
 
-    fn store_string(&mut self, key: &str, value: &str) -> Result<(), StringEspError> {
+    pub fn store_string(&mut self, key: &str, value: &str) -> Result<(), StringEspError> {
         self.nvs
             .set_str(key, value)
             .map_err(|e| StringEspError("Failed to store string", e))
     }
 
-    fn read_string(&self, key: &str, default: &str) -> String {
+    pub fn read_string(&self, key: &str, default: &str) -> String {
         let size = self.nvs.str_len(key).unwrap_or(Some(0)).unwrap_or(0);
         let mut buf = vec![0; size];
 
@@ -113,25 +114,31 @@ impl MainConfiguration {
             .to_string()
     }
 
-    fn store_float(&mut self, key: &str, value: f32) -> Result<(), StringEspError> {
+    pub fn store_float(&mut self, key: &str, value: f32) -> Result<(), StringEspError> {
         let val = u32::from_ne_bytes(value.to_ne_bytes());
         self.nvs
             .set_u32(key, val)
             .map_err(|e| StringEspError("Failed to store float", e))
     }
 
-    fn read_float(&self, key: &str, default: f32) -> f32 {
-        // let mut buf = default.to_ne_bytes();
-
-        // match self.nvs.get_blob(key, &mut buf) {
-        //     Ok(_) => f32::from_ne_bytes(buf),
-        //     Err(_) => return default,
-        // }
-
+    pub fn read_float(&self, key: &str, default: f32) -> f32 {
         match self.nvs.get_u32(key).unwrap_or(None) {
             Some(value) => f32::from_ne_bytes(value.to_ne_bytes()),
             None => default,
         }
+    }
+
+    pub fn store_unsigned(&mut self, key: &str, value: u32) -> Result<(), StringEspError> {
+        self.nvs
+            .set_u32(key, value)
+            .map_err(|e| StringEspError("Failed to store unsigned", e))
+    }
+
+    pub fn read_unsigned(&self, key: &str, default: u32) -> u32 {
+        self.nvs
+            .get_u32(key)
+            .unwrap_or(Some(default))
+            .unwrap_or(default)
     }
 
     fn trunc_string(s: &str, max: usize) -> &str {
