@@ -1,5 +1,4 @@
 use crate::{configuration::MAP_NVS_FORM, main_configuration::MainConfiguration};
-use log::info;
 
 const BASE_HTML: &str = include_str!("html/base.html");
 
