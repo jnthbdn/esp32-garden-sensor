@@ -1,22 +1,20 @@
 use std::str::FromStr;
 use std::sync::Mutex;
 
-use adc_helper::AdcHelper;
 use anyhow::Ok;
-use esp_idf_hal::adc::{attenuation, Adc};
+use board_helper::BoardHelper;
 use esp_idf_hal::delay::FreeRtos;
-use esp_idf_hal::gpio::{self, ADCPin, Output, PinDriver};
 use esp_idf_hal::io::Write;
 use esp_idf_hal::peripherals::Peripherals;
-use esp_idf_hal::sys::{adc_atten_t, esp_deep_sleep};
+use esp_idf_hal::sys::esp_deep_sleep;
 use esp_idf_svc::http::{self, server::EspHttpServer, Method};
 use esp_idf_svc::wifi::{BlockingWifi, EspWifi};
 use log::info;
 use main_configuration::MainConfiguration;
-use moisture_sensor::MoistureSensor;
 use post_data::PostData;
 
 mod adc_helper;
+mod board_helper;
 mod configuration;
 mod main_configuration;
 mod moisture_sensor;
@@ -25,28 +23,6 @@ mod string_error;
 mod template_helper;
 mod wifi_helper;
 
-// const V_HIGH_MOIST: f32 = 1.26;
-// const V_LOW_MOIST: f32 = 2.55;
-
-const MIN_BAT_VOLT: f32 = 3.2;
-const MAX_BAT_VOLT: f32 = 4.2;
-
-struct OnBoardLed<'a> {
-    orange: PinDriver<'a, gpio::Gpio18, Output>,
-    white: PinDriver<'a, gpio::Gpio19, Output>,
-}
-
-fn get_batt_percentage(voltage: f32) -> f32 {
-    if voltage >= MAX_BAT_VOLT {
-        return 100.0;
-    } else if voltage <= MIN_BAT_VOLT {
-        return 0.0;
-    }
-
-    let slope: f32 = 100.0 / (MAX_BAT_VOLT - MIN_BAT_VOLT);
-    slope * (voltage - MIN_BAT_VOLT)
-}
-
 fn main() -> anyhow::Result<()> {
     esp_idf_hal::sys::link_patches();
     esp_idf_svc::log::EspLogger::initialize_default();
@@ -54,31 +30,19 @@ fn main() -> anyhow::Result<()> {
     let peripherals = Peripherals::take()?;
     let main_config = MainConfiguration::new()?;
 
-    let mut leds = OnBoardLed {
-        orange: PinDriver::output(peripherals.pins.gpio18)?,
-        white: PinDriver::output(peripherals.pins.gpio19)?,
-    };
+    let mut board = BoardHelper::new(&main_config, peripherals.adc1, peripherals.pins)?;
 
-    let adc_helper: AdcHelper<{ attenuation::DB_11 }, _, _, _> = AdcHelper::new(
-        peripherals.adc1,
-        peripherals.pins.gpio3,
-        peripherals.pins.gpio4,
-    )?;
-
-    let mut button_settings = PinDriver::input(peripherals.pins.gpio5)?;
-    button_settings.set_pull(gpio::Pull::Up)?;
-
-    leds.white.set_low()?;
-    leds.orange.set_low()?;
+    board.leds.white.set_low()?;
+    board.leds.orange.set_low()?;
 
     FreeRtos::delay_ms(1000);
 
-    if button_settings.is_high() {
+    if board.buttons.settings.is_high() {
         let _wifi = wifi_helper::connect_wifi(&main_config, peripherals.modem)?;
-        main_sensor(leds, main_config, adc_helper)?;
+        main_sensor(board, main_config)?;
     } else {
         let wifi = wifi_helper::create_ap(peripherals.modem)?;
-        main_settings(main_config, leds, wifi)?
+        main_settings(main_config, board, wifi)?
     }
 
     Ok(())
@@ -86,10 +50,10 @@ fn main() -> anyhow::Result<()> {
 
 fn main_settings(
     main_config: MainConfiguration,
-    mut leds: OnBoardLed,
+    mut board: BoardHelper,
     wifi: BlockingWifi<EspWifi>,
 ) -> anyhow::Result<()> {
-    leds.white.set_high()?;
+    board.leds.white.set_high()?;
 
     let mutex_config = Mutex::new(main_config);
     let mutex_wifi = Mutex::new(wifi);
@@ -177,35 +141,23 @@ fn main_settings(
     Ok(())
 }
 
-fn main_sensor<'a, const A: adc_atten_t, ADC: Adc, P1: ADCPin<Adc = ADC>, P2: ADCPin<Adc = ADC>>(
-    mut leds: OnBoardLed,
-    main_config: MainConfiguration,
-    mut adc_helper: AdcHelper<'a, A, ADC, P1, P2>,
-) -> anyhow::Result<()> {
-    leds.orange.set_high()?;
+fn main_sensor<'a>(mut board: BoardHelper, _main_config: MainConfiguration) -> anyhow::Result<()> {
+    board.leds.orange.set_high()?;
 
     FreeRtos::delay_ms(1000);
 
-    let adc_batt_voltage = adc_helper.read_battery_value() as f32 / 1000.0;
-    let adc_moisture_voltage = adc_helper.read_moisture_value() as f32 / 1000.0;
-
-    let moisture_sensor = MoistureSensor::new(
-        main_config.get_vhigh_moisture(),
-        main_config.get_vlow_moisture(),
-    );
-
-    leds.orange.set_low()?;
+    board.leds.orange.set_low()?;
 
     info!(
         "Battery Status: {:.2}% ({:.2} V)",
-        get_batt_percentage(adc_batt_voltage * 2.0),
-        adc_batt_voltage * 2.0
+        board.read_battery_value(),
+        board.read_raw_battery_value() as f32 / 1000.0 * 2.0
     );
 
     info!(
         "Moisture level: {:.2}% ({:.2} V)",
-        moisture_sensor.get_moisture_level(adc_moisture_voltage),
-        adc_moisture_voltage
+        board.adc.read_moisture_value(),
+        board.adc.read_raw_moisture_value()
     );
 
     info!("Going to sleep !");
