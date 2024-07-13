@@ -14,7 +14,6 @@ use log::{error, info};
 use nvs_configuration::NvsConfiguration;
 use post_data::PostData;
 
-mod adc_helper;
 mod board;
 mod configuration;
 mod moisture_sensor;
