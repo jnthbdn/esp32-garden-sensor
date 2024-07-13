@@ -1,17 +1,2 @@
-<form name="settings" method="post" action="/">
-<div id="tabs">
-<div class="tab open" onclick="opentab(0)" title="Wireless settings"><svg viewBox="4 7 16 16"><path d="M12 19a1 1 0 1 0 0 2v-2Zm.01 2a1 1 0 1 0 0-2v2Zm2.68-3.96a1 1 0 0 0 1.347-1.48l-1.346 1.48Zm3.364-3.7a1 1 0 0 0 1.346-1.48l-1.346 1.48Zm-10.09 2.22a1 1 0 0 0 1.346 1.48l-1.346-1.48ZM4.6 11.86a1 1 0 1 0 1.345 1.48l-1.345-1.48ZM12 21h.01v-2H12v2Zm0-5c1.036 0 1.979.393 2.69 1.04l1.345-1.48A5.982 5.982 0 0 0 12 14v2Zm0-5c2.331 0 4.454.886 6.053 2.34l1.346-1.48A10.964 10.964 0 0 0 12 9v2ZM9.31 17.04A3.982 3.982 0 0 1 12 16v-2a5.982 5.982 0 0 0-4.036 1.56l1.346 1.48Zm-3.364-3.7A8.964 8.964 0 0 1 12 11V9a10.964 10.964 0 0 0-7.4 2.86l1.346 1.48Z"/></svg></div>
-<div class="tab" onclick="opentab(1)" title="Sensor settings"><svg viewBox="0 0 512 512"><path d="M424 24h48v52h-48zm0 164h48v300h-48zm60.79-88h-73.578C396.188 100 384 112.188 384 127.211v9.578c0 15.023 12.188 27.21 27.211 27.21h73.578c15.023 0 27.21-12.187 27.21-27.21v-9.578C512 112.188 499.813 100 484.79 100zM231.985 24h48v276.641h-48zm0 388.641h48V488h-48zm60.789-88h-73.578c-15.023 0-27.21 12.187-27.21 27.211v9.578c0 15.024 12.187 27.211 27.21 27.211h73.578c15.023 0 27.211-12.187 27.211-27.211v-9.578c0-15.024-12.188-27.211-27.211-27.211zM40 308h48v180H40zm0-284h48v172H40zm60.79 196H27.211C12.188 220 0 232.188 0 247.211v9.578C0 271.813 12.188 284 27.211 284h73.578c15.023 0 27.21-12.187 27.21-27.21v-9.578C128 232.188 115.813 220 100.79 220z"/></svg></div>
-</div>
-<div class="tab_content">
-<label for="ssid">SSID: </label><input type="text" id="ssid" name="ssid" value="{SSID}" maxlength="32" required/><br/>
-<label for="pass">Passphrase: </label><input type="password" id="pass" name="pass" value="" placeholder="Unchanged" maxlength="63"/><br/>
-<label for="name">Name: </label><input type="text" id="name" name="name" value="{NAME}" maxlength="32" required/><br/>
-<label for="id">ID: </label><div id="prefix"><span>0x</span><input type="text" id="id" name="id" value="{ID}" maxlength="8" pattern="^[0-9ABCDEFabcdef]{1,8}$" required/></div><br/>
-</div>
-<div class="tab_content">
 <label for="vhigh_moist">High moisture voltage: </label><div class="postfix"><input type="number" id="vhigh_moist" name="vhigh_moist" value="{VHIGH_MOIST}" min="0.0" max="3.3" step="0.01" required/><span>V</span></div><br/>
-<label for="vlow_moist">Low moistusre voltage: </label><div class="postfix"><input type="number" id="vlow_moist" name="vlow_moist" value="{VLOW_MOIST}" min="0.0" max="3.3" step="0.01" required/><span>V</span></div><br/>    
-</div>
-<input type="submit" value="🚀 Save">
-</form>
+<label for="vlow_moist">Low moistusre voltage: </label><div class="postfix"><input type="number" id="vlow_moist" name="vlow_moist" value="{VLOW_MOIST}" min="0.0" max="3.3" step="0.01" required/><span>V</span></div><br/>
