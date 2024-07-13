@@ -7,7 +7,16 @@ const BASE_HTML: &str = include_str!("html/base.html");
 #[cfg(feature = "moisture-sensor")]
 const SENSOR_FORM_HTML: &str = include_str!("html/form_moisture.html");
 
-pub fn template_moisture(
+pub fn to_html(
+    main_config: &NvsConfiguration,
+    error_message: Option<String>,
+    aps: Option<Vec<AccessPointInfo>>,
+) -> String {
+    #[cfg(feature = "moisture-sensor")]
+    template_moisture(main_config, error_message, aps)
+}
+
+fn template_moisture(
     main_config: &NvsConfiguration,
     error_message: Option<String>,
     aps: Option<Vec<AccessPointInfo>>,
