@@ -1,5 +1,6 @@
 use std::str::FromStr;
 use std::sync::Mutex;
+use std::time::SystemTime;
 
 use anyhow::Ok;
 use board_helper::BoardHelper;
@@ -9,15 +10,15 @@ use esp_idf_hal::peripherals::Peripherals;
 use esp_idf_hal::sys::esp_deep_sleep;
 use esp_idf_svc::http::{self, server::EspHttpServer, Method};
 use esp_idf_svc::wifi::{BlockingWifi, EspWifi};
-use log::info;
-use main_configuration::MainConfiguration;
+use log::{error, info};
+use nvs_configuration::NvsConfiguration;
 use post_data::PostData;
 
 mod adc_helper;
 mod board_helper;
 mod configuration;
-mod main_configuration;
 mod moisture_sensor;
+mod nvs_configuration;
 mod post_data;
 mod string_error;
 mod template_helper;
@@ -28,7 +29,7 @@ fn main() -> anyhow::Result<()> {
     esp_idf_svc::log::EspLogger::initialize_default();
 
     let peripherals = Peripherals::take()?;
-    let main_config = MainConfiguration::new()?;
+    let main_config = NvsConfiguration::new()?;
 
     let mut board = BoardHelper::new(&main_config, peripherals.adc1, peripherals.pins)?;
 
@@ -38,19 +39,56 @@ fn main() -> anyhow::Result<()> {
     FreeRtos::delay_ms(1000);
 
     if board.buttons.settings.is_high() {
-        let _wifi = wifi_helper::connect_wifi(&main_config, peripherals.modem)?;
-        main_sensor(board, main_config)?;
+        let wifi = wifi_helper::connect_wifi(&main_config, peripherals.modem);
+
+        if wifi.is_ok() {
+            error!(
+                "[MAIN SENSOR] {}",
+                main_sensor(&mut board, main_config).unwrap_err()
+            );
+        } else {
+            error!("[WIFI] {}", wifi.err().unwrap());
+        }
+
+        error!("Retry connection in 10 seconds...");
+        let start = SystemTime::now();
+        loop {
+            board.leds.orange.set_high()?;
+            FreeRtos::delay_ms(100);
+            board.leds.orange.set_low()?;
+            FreeRtos::delay_ms(100);
+
+            if start.elapsed().unwrap().as_secs() >= 10 {
+                esp_idf_hal::reset::restart();
+            }
+        }
     } else {
-        let wifi = wifi_helper::create_ap(peripherals.modem)?;
-        main_settings(main_config, board, wifi)?
+        let wifi = wifi_helper::create_ap(peripherals.modem);
+
+        if wifi.is_ok() {
+            error!(
+                "[MAIN SETTINGS] {}",
+                main_settings(main_config, &mut board, wifi.unwrap()).unwrap_err()
+            );
+        } else {
+            error!("[WIFI] {}", wifi.err().unwrap());
+        }
+
+        loop {
+            board.leds.white.set_high()?;
+            FreeRtos::delay_ms(100);
+            board.leds.white.set_low()?;
+            FreeRtos::delay_ms(100);
+        }
     }
 
+    #[allow(unreachable_code)]
     Ok(())
 }
 
 fn main_settings(
-    main_config: MainConfiguration,
-    mut board: BoardHelper,
+    main_config: NvsConfiguration,
+    board: &mut BoardHelper,
     wifi: BlockingWifi<EspWifi>,
 ) -> anyhow::Result<()> {
     board.leds.white.set_high()?;
@@ -64,13 +102,14 @@ fn main_settings(
     })?;
 
     server.fn_handler("/", Method::Get, |req| {
-        let scan_result = mutex_wifi.lock().unwrap().scan();
-
-        info!("Scan result: {:?}", scan_result);
-
         req.into_ok_response()?
             .write_all(
-                template_helper::template_moisture(&mutex_config.lock().unwrap(), None).as_bytes(),
+                template_helper::template_moisture(
+                    &mutex_config.lock().unwrap(),
+                    None,
+                    mutex_wifi.lock().unwrap().scan().ok(),
+                )
+                .as_bytes(),
             )
             .map(|_| ())
     })?;
@@ -101,19 +140,26 @@ fn main_settings(
                             let data = post_data.read_value(&elem.form_name).unwrap();
 
                             match elem.data_type {
-                                configuration::MapFormType::String => {
+                                configuration::MapFormType::String(_) => {
                                     mainconfig_lock.store_string(&elem.nvs_key, data.as_str())?
                                 }
 
-                                configuration::MapFormType::Float => mainconfig_lock.store_float(
-                                    &elem.nvs_key,
-                                    f32::from_str(data.as_str()).unwrap(),
-                                )?,
+                                configuration::MapFormType::Float(_) => mainconfig_lock
+                                    .store_float(
+                                        &elem.nvs_key,
+                                        f32::from_str(data.as_str()).unwrap(),
+                                    )?,
 
-                                configuration::MapFormType::Unsigned => mainconfig_lock
+                                configuration::MapFormType::UHex(_) => mainconfig_lock
                                     .store_unsigned(
                                         &elem.nvs_key,
-                                        u32::from_str(data.as_str()).unwrap(),
+                                        u32::from_str_radix(data.as_str(), 16).unwrap(),
+                                    )?,
+
+                                configuration::MapFormType::Unsigned64(_) => mainconfig_lock
+                                    .store_unsigned_64(
+                                        &elem.nvs_key,
+                                        u64::from_str(data.as_str()).unwrap(),
                                     )?,
                             };
                         }
@@ -127,8 +173,12 @@ fn main_settings(
         }
 
         req.into_ok_response()?.write_all(
-            template_helper::template_moisture(&mutex_config.lock().unwrap(), Some(error_message))
-                .as_bytes(),
+            template_helper::template_moisture(
+                &mutex_config.lock().unwrap(),
+                Some(error_message),
+                mutex_wifi.lock().unwrap().scan().ok(),
+            )
+            .as_bytes(),
         )?;
         Ok(())
     })?;
@@ -141,7 +191,7 @@ fn main_settings(
     Ok(())
 }
 
-fn main_sensor<'a>(mut board: BoardHelper, _main_config: MainConfiguration) -> anyhow::Result<()> {
+fn main_sensor<'a>(board: &mut BoardHelper, main_config: NvsConfiguration) -> anyhow::Result<()> {
     board.leds.orange.set_high()?;
 
     FreeRtos::delay_ms(1000);
@@ -163,7 +213,7 @@ fn main_sensor<'a>(mut board: BoardHelper, _main_config: MainConfiguration) -> a
     info!("Going to sleep !");
 
     unsafe {
-        esp_deep_sleep(10_000_000);
+        esp_deep_sleep(main_config.get_deep_sleep_duration());
     }
 
     #[allow(unreachable_code)]
