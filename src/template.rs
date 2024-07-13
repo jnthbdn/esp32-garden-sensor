@@ -5,7 +5,7 @@ use crate::{configuration::MAP_NVS_FORM, nvs_configuration::NvsConfiguration};
 const BASE_HTML: &str = include_str!("html/base.html");
 
 #[cfg(feature = "moisture-sensor")]
-const SENSOR_FORM_HTML: &str = include_str!("html/form_moisture.html");
+const SENSOR_FORM_MOISTURE_HTML: &str = include_str!("html/form_moisture.html");
 
 pub fn to_html(
     main_config: &NvsConfiguration,
@@ -13,17 +13,18 @@ pub fn to_html(
     aps: Option<Vec<AccessPointInfo>>,
 ) -> String {
     #[cfg(feature = "moisture-sensor")]
-    template_moisture(main_config, error_message, aps)
+    generate_html(main_config, error_message, aps, SENSOR_FORM_MOISTURE_HTML)
 }
 
-fn template_moisture(
+fn generate_html(
     main_config: &NvsConfiguration,
     error_message: Option<String>,
     aps: Option<Vec<AccessPointInfo>>,
+    form_setting: &str,
 ) -> String {
     let mut template = BASE_HTML.to_string();
 
-    template = template.replace("{FORM_SETTINGS}", SENSOR_FORM_HTML);
+    template = template.replace("{FORM_SETTINGS}", form_setting);
     template = template.replace("{ERROR_MSG}", &error_message.unwrap_or("".to_string()));
     template = template.replace("{AP_LIST}", &accespoint_to_template(aps));
 
