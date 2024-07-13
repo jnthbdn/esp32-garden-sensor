@@ -3,7 +3,7 @@ use std::sync::Mutex;
 use std::time::SystemTime;
 
 use anyhow::Ok;
-use board_helper::BoardHelper;
+use board::Board;
 use esp_idf_hal::delay::FreeRtos;
 use esp_idf_hal::io::Write;
 use esp_idf_hal::peripherals::Peripherals;
@@ -15,13 +15,13 @@ use nvs_configuration::NvsConfiguration;
 use post_data::PostData;
 
 mod adc_helper;
-mod board_helper;
+mod board;
 mod configuration;
 mod moisture_sensor;
 mod nvs_configuration;
 mod post_data;
 mod string_error;
-mod template_helper;
+mod template;
 mod wifi_helper;
 
 fn main() -> anyhow::Result<()> {
@@ -31,7 +31,7 @@ fn main() -> anyhow::Result<()> {
     let peripherals = Peripherals::take()?;
     let main_config = NvsConfiguration::new()?;
 
-    let mut board = BoardHelper::new(&main_config, peripherals.adc1, peripherals.pins)?;
+    let mut board = Board::new(&main_config, peripherals.adc1, peripherals.pins)?;
 
     board.leds.white.set_low()?;
     board.leds.orange.set_low()?;
@@ -88,7 +88,7 @@ fn main() -> anyhow::Result<()> {
 
 fn main_settings(
     main_config: NvsConfiguration,
-    board: &mut BoardHelper,
+    board: &mut Board,
     wifi: BlockingWifi<EspWifi>,
 ) -> anyhow::Result<()> {
     board.leds.white.set_high()?;
@@ -104,7 +104,7 @@ fn main_settings(
     server.fn_handler("/", Method::Get, |req| {
         req.into_ok_response()?
             .write_all(
-                template_helper::template_moisture(
+                template::to_html(
                     &mutex_config.lock().unwrap(),
                     None,
                     mutex_wifi.lock().unwrap().scan().ok(),
@@ -173,7 +173,7 @@ fn main_settings(
         }
 
         req.into_ok_response()?.write_all(
-            template_helper::template_moisture(
+            template::to_html(
                 &mutex_config.lock().unwrap(),
                 Some(error_message),
                 mutex_wifi.lock().unwrap().scan().ok(),
@@ -191,7 +191,7 @@ fn main_settings(
     Ok(())
 }
 
-fn main_sensor<'a>(board: &mut BoardHelper, main_config: NvsConfiguration) -> anyhow::Result<()> {
+fn main_sensor<'a>(board: &mut Board, main_config: NvsConfiguration) -> anyhow::Result<()> {
     board.leds.orange.set_high()?;
 
     FreeRtos::delay_ms(1000);
