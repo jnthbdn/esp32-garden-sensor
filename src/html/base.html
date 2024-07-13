@@ -38,7 +38,7 @@ input[type="submit"]{margin: 16px 0 0 0;padding: 16px 0;width: 100%;border-radiu
 <label for="pass">Passphrase: </label><div class="postfix"><input type="password" id="pass" name="pass" value="{PASS}" placeholder="Passphrase" maxlength="63"/><span><a onclick="show_hide('pass')" title="Show/Hide password" style="cursor: pointer;">👁️</a></span></div><br/>
 <label for="name">Name: </label><input type="text" id="name" name="name" value="{NAME}" maxlength="32" required/><br/>
 <label for="id">ID: </label><div class="prefix"><span>0x</span><input type="text" id="id" name="id" value="{ID}" maxlength="8" pattern="^[0-9ABCDEFabcdef]{1,8}$" required/></div><br/>
-<label for="sleep">Deep sleep time (microseconds): </label><div class="postfix"><input type="number" id="sleep" name="sleep" value="{SLEEP}" min="10000000" max="86400000000" step="1" required/><span>µS</span></div><br/>
+<label for="sleep">Deep sleep time (microseconds): </label><div class="postfix"><input type="number" id="sleep" name="sleep" value="{SLEEP}" min="10000000" max="86400000000" step="1" required/><span>µs</span></div><br/>
 </div>
 <div class="tab_content">
 {FORM_SETTINGS}
