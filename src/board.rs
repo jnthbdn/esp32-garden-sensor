@@ -42,14 +42,14 @@ pub struct BatterySensor<'a> {
     adc_pin_bat: AdcChannelDriver<'a, { attenuation::DB_11 }, Gpio3>,
 }
 
-pub struct BoardHelper<'a> {
+pub struct Board<'a> {
     pub adc: AdcSensor<'a>,
     pub battery: BatterySensor<'a>,
     pub buttons: Buttons<'a>,
     pub leds: OnBoardLed<'a>,
 }
 
-impl<'a> BoardHelper<'a> {
+impl<'a> Board<'a> {
     pub fn new(main_config: &NvsConfiguration, adc_1: ADC1, pins: Pins) -> anyhow::Result<Self> {
         #[cfg(feature = "moisture-sensor")]
         let mut s = Self {
