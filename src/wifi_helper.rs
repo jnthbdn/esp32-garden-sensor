@@ -12,10 +12,10 @@ use esp_idf_svc::{
 use log::info;
 use std::{net::Ipv4Addr, str::FromStr};
 
-use crate::main_configuration::MainConfiguration;
+use crate::nvs_configuration::NvsConfiguration;
 
 pub fn connect_wifi<'a>(
-    config: &MainConfiguration,
+    config: &NvsConfiguration,
     modem: impl Peripheral<P = Modem> + 'a,
 ) -> anyhow::Result<BlockingWifi<EspWifi<'a>>> {
     let wifi_configuration: Configuration = Configuration::Client(ClientConfiguration {

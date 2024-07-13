@@ -3,7 +3,7 @@ use esp_idf_hal::{
     gpio::*,
 };
 
-use crate::{main_configuration::MainConfiguration, moisture_sensor::MoistureSensor};
+use crate::{moisture_sensor::MoistureSensor, nvs_configuration::NvsConfiguration};
 
 const MIN_BAT_VOLT: f32 = 3.2;
 const MAX_BAT_VOLT: f32 = 4.2;
@@ -50,9 +50,9 @@ pub struct BoardHelper<'a> {
 }
 
 impl<'a> BoardHelper<'a> {
-    pub fn new(main_config: &MainConfiguration, adc_1: ADC1, pins: Pins) -> anyhow::Result<Self> {
+    pub fn new(main_config: &NvsConfiguration, adc_1: ADC1, pins: Pins) -> anyhow::Result<Self> {
         #[cfg(feature = "moisture-sensor")]
-        Ok(Self {
+        let mut s = Self {
             adc: AdcSensor {
                 adc: AdcDriver::new(adc_1, &Config::new().calibration(true))?,
                 adc_pin_moist: AdcChannelDriver::new(pins.gpio4)?,
@@ -71,7 +71,10 @@ impl<'a> BoardHelper<'a> {
                 orange: PinDriver::output(pins.gpio18)?,
                 white: PinDriver::output(pins.gpio19)?,
             },
-        })
+        };
+
+        s.buttons.settings.set_pull(Pull::Up)?;
+        Ok(s)
     }
 
     pub fn read_raw_battery_value(&mut self) -> u16 {
