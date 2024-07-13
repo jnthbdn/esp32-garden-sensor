@@ -1,4 +1,4 @@
-use crate::main_configuration::*;
+use crate::nvs_configuration::*;
 
 #[cfg(all(feature = "moisture-sensor", feature = "water-level-sensor"))]
 compile_error!("Choose only one sensor.");
@@ -8,9 +8,10 @@ compile_error!("Choose one sensor feature.");
 
 #[derive(Debug)]
 pub enum MapFormType {
-    String,
-    Float,
-    Unsigned,
+    String(&'static str),
+    Float(f32),
+    UHex(u32),
+    Unsigned64(u64),
 }
 
 #[derive(Debug)]
@@ -26,38 +27,44 @@ pub const MAP_NVS_FORM: &[MapFormElement] = &[
         nvs_key: &KEY_SSID,
         form_name: "ssid",
         template_id: Some("{SSID}"),
-        data_type: MapFormType::String,
+        data_type: MapFormType::String(""),
     },
     MapFormElement {
         nvs_key: &KEY_PASSPHRASE,
         form_name: "pass",
-        template_id: None,
-        data_type: MapFormType::String,
+        template_id: Some("{PASS}"),
+        data_type: MapFormType::String(""),
     },
     MapFormElement {
         nvs_key: &KEY_NAME,
         form_name: "name",
         template_id: Some("{NAME}"),
-        data_type: MapFormType::String,
+        data_type: MapFormType::String(""),
     },
     MapFormElement {
-        nvs_key: &KEY_NAME,
+        nvs_key: &KEY_ID,
         form_name: "id",
         template_id: Some("{ID}"),
-        data_type: MapFormType::Unsigned,
+        data_type: MapFormType::UHex(0),
+    },
+    MapFormElement {
+        nvs_key: &KEY_SLEEP,
+        form_name: "sleep",
+        template_id: Some("{SLEEP}"),
+        data_type: MapFormType::Unsigned64(3600_000_000),
     },
     #[cfg(feature = "moisture-sensor")]
     MapFormElement {
         nvs_key: &KEY_VHIGH,
         form_name: "vhigh_moist",
         template_id: Some("{VHIGH_MOIST}"),
-        data_type: MapFormType::Float,
+        data_type: MapFormType::Float(1.26),
     },
     #[cfg(feature = "moisture-sensor")]
     MapFormElement {
         nvs_key: &KEY_VLOW,
         form_name: "vlow_moist",
         template_id: Some("{VLOW_MOIST}"),
-        data_type: MapFormType::Float,
+        data_type: MapFormType::Float(2.55),
     },
 ];
