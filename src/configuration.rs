@@ -8,9 +8,9 @@ compile_error!("Choose one sensor feature.");
 
 #[derive(Debug)]
 pub enum MapFormType {
-    String(&'static str),
+    String(&'static str, usize),
     Float(f32),
-    UHex(u32),
+    U32Hex(u32),
     Unsigned64(u64),
 }
 
@@ -27,25 +27,25 @@ pub const MAP_NVS_FORM: &[MapFormElement] = &[
         nvs_key: &KEY_SSID,
         form_name: "ssid",
         template_id: Some("{SSID}"),
-        data_type: MapFormType::String(""),
+        data_type: MapFormType::String("", 32),
     },
     MapFormElement {
         nvs_key: &KEY_PASSPHRASE,
         form_name: "pass",
         template_id: Some("{PASS}"),
-        data_type: MapFormType::String(""),
+        data_type: MapFormType::String("", 63),
     },
     MapFormElement {
         nvs_key: &KEY_NAME,
         form_name: "name",
         template_id: Some("{NAME}"),
-        data_type: MapFormType::String(""),
+        data_type: MapFormType::String("", 32),
     },
     MapFormElement {
         nvs_key: &KEY_ID,
         form_name: "id",
         template_id: Some("{ID}"),
-        data_type: MapFormType::UHex(0),
+        data_type: MapFormType::U32Hex(0),
     },
     MapFormElement {
         nvs_key: &KEY_SLEEP,
