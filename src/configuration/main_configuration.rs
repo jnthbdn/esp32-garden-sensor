@@ -12,6 +12,7 @@ pub enum MapFormType {
     Float(f32),
     U32Hex(u32),
     Unsigned64(u64),
+    Unsigned8(u8),
 }
 
 #[derive(Debug)]
@@ -52,6 +53,12 @@ pub const MAP_NVS_FORM: &[MapFormElement] = &[
         form_name: "sleep",
         template_id: Some("{SLEEP}"),
         data_type: MapFormType::Unsigned64(3600_000_000),
+    },
+    MapFormElement {
+        nvs_key: &KEY_TX_POWER,
+        form_name: "txpxr",
+        template_id: Some("{TXPWR}"),
+        data_type: MapFormType::Unsigned8(80),
     },
     #[cfg(feature = "moisture-sensor")]
     MapFormElement {

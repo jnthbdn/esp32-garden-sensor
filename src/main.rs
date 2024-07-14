@@ -169,6 +169,12 @@ fn main_settings(
                                     &elem.nvs_key,
                                     u64::from_str(data.as_str()).unwrap(),
                                 )?,
+
+                                main_configuration::MapFormType::Unsigned8(_) => mainconfig_lock
+                                    .store_u8(
+                                        &elem.nvs_key,
+                                        u8::from_str(data.as_str()).unwrap(),
+                                    )?,
                             };
                         }
                     }

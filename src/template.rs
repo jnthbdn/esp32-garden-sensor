@@ -53,6 +53,11 @@ fn generate_html(
                 elem.template_id.unwrap(),
                 &main_config.read_u64(&elem.nvs_key, default).to_string(),
             ),
+
+            main_configuration::MapFormType::Unsigned8(default) => template.replace(
+                elem.template_id.unwrap(),
+                &main_config.read_u8(&elem.nvs_key, default).to_string(),
+            ),
         };
     }
 
