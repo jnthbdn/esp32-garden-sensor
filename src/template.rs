@@ -1,6 +1,6 @@
 use esp_idf_svc::wifi::AccessPointInfo;
 
-use crate::{configuration::MAP_NVS_FORM, nvs_configuration::NvsConfiguration};
+use crate::configuration::{main_configuration, nvs_configuration::NvsConfiguration};
 
 const BASE_HTML: &str = include_str!("html/base.html");
 
@@ -28,28 +28,28 @@ fn generate_html(
     template = template.replace("{ERROR_MSG}", &error_message.unwrap_or("".to_string()));
     template = template.replace("{AP_LIST}", &accespoint_to_template(aps));
 
-    for elem in MAP_NVS_FORM {
+    for elem in main_configuration::MAP_NVS_FORM {
         if elem.template_id.is_none() {
             continue;
         }
 
         template = match elem.data_type {
-            crate::configuration::MapFormType::String(default, _) => template.replace(
+            main_configuration::MapFormType::String(default, _) => template.replace(
                 elem.template_id.unwrap(),
                 &main_config.read_string(&elem.nvs_key, default),
             ),
 
-            crate::configuration::MapFormType::Float(default) => template.replace(
+            main_configuration::MapFormType::Float(default) => template.replace(
                 elem.template_id.unwrap(),
                 &format!("{}", main_config.read_float(&elem.nvs_key, default)),
             ),
 
-            crate::configuration::MapFormType::U32Hex(default) => template.replace(
+            main_configuration::MapFormType::U32Hex(default) => template.replace(
                 elem.template_id.unwrap(),
                 &format!("{:x}", main_config.read_u32(&elem.nvs_key, default)),
             ),
 
-            crate::configuration::MapFormType::Unsigned64(default) => template.replace(
+            main_configuration::MapFormType::Unsigned64(default) => template.replace(
                 elem.template_id.unwrap(),
                 &main_config.read_u64(&elem.nvs_key, default).to_string(),
             ),

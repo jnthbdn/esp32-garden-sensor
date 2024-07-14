@@ -4,6 +4,7 @@ use std::time::SystemTime;
 
 use anyhow::Ok;
 use board::Board;
+use configuration::{main_configuration, nvs_configuration::NvsConfiguration};
 use esp_idf_hal::delay::FreeRtos;
 use esp_idf_hal::io::Write;
 use esp_idf_hal::peripherals::Peripherals;
@@ -11,13 +12,17 @@ use esp_idf_hal::sys::esp_deep_sleep;
 use esp_idf_svc::http::{self, server::EspHttpServer, Method};
 use esp_idf_svc::wifi::{BlockingWifi, EspWifi};
 use log::{error, info};
-use nvs_configuration::NvsConfiguration;
 use post_data::PostData;
 
 mod board;
-mod configuration;
-mod moisture_sensor;
-mod nvs_configuration;
+mod sensors {
+    pub mod battery_sensor;
+    pub mod moisture_sensor;
+}
+mod configuration {
+    pub mod main_configuration;
+    pub mod nvs_configuration;
+}
 mod post_data;
 mod string_error;
 mod template;
@@ -134,31 +139,36 @@ fn main_settings(
                         PostData::from_string(String::from_utf8(buffer[0..bytes_read].to_vec())?);
                     let mut mainconfig_lock = mutex_config.lock().unwrap();
 
-                    for elem in configuration::MAP_NVS_FORM {
+                    for elem in main_configuration::MAP_NVS_FORM {
                         if post_data.is_key_exists(elem.form_name) {
                             let data = post_data.read_value(&elem.form_name).unwrap();
 
                             match elem.data_type {
-                                configuration::MapFormType::String(_, max_size) => mainconfig_lock
-                                    .store_string(&elem.nvs_key, data.as_str(), max_size)?,
+                                main_configuration::MapFormType::String(_, max_size) => {
+                                    mainconfig_lock.store_string(
+                                        &elem.nvs_key,
+                                        data.as_str(),
+                                        max_size,
+                                    )?
+                                }
 
-                                configuration::MapFormType::Float(_) => mainconfig_lock
+                                main_configuration::MapFormType::Float(_) => mainconfig_lock
                                     .store_float(
                                         &elem.nvs_key,
                                         f32::from_str(data.as_str()).unwrap(),
                                     )?,
 
-                                configuration::MapFormType::U32Hex(_) => mainconfig_lock
+                                main_configuration::MapFormType::U32Hex(_) => mainconfig_lock
                                     .store_u32(
                                         &elem.nvs_key,
                                         u32::from_str_radix(data.as_str(), 16).unwrap(),
                                     )?,
 
-                                configuration::MapFormType::Unsigned64(_) => mainconfig_lock
+                                main_configuration::MapFormType::Unsigned64(_) => mainconfig_lock
                                     .store_u64(
-                                        &elem.nvs_key,
-                                        u64::from_str(data.as_str()).unwrap(),
-                                    )?,
+                                    &elem.nvs_key,
+                                    u64::from_str(data.as_str()).unwrap(),
+                                )?,
                             };
                         }
                     }
@@ -198,14 +208,14 @@ fn main_sensor<'a>(board: &mut Board, main_config: NvsConfiguration) -> anyhow::
 
     info!(
         "Battery Status: {:.2}% ({:.2} V)",
-        board.read_battery_value(),
-        board.read_raw_battery_value() as f32 / 1000.0 * 2.0
+        board.sensors.battery_sensor.read_raw_value(),
+        board.sensors.battery_sensor.get_level()
     );
 
     info!(
         "Moisture level: {:.2}% ({:.2} V)",
-        board.adc.read_moisture_value(),
-        board.adc.read_raw_moisture_value()
+        board.sensors.moisture_sensor.read_raw_value(),
+        board.sensors.moisture_sensor.get_level()
     );
 
     info!("Going to sleep !");

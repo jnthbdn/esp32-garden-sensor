@@ -12,7 +12,7 @@ use esp_idf_svc::{
 use log::info;
 use std::{net::Ipv4Addr, str::FromStr};
 
-use crate::nvs_configuration::NvsConfiguration;
+use crate::configuration::nvs_configuration::NvsConfiguration;
 
 pub fn connect_wifi<'a>(
     config: &NvsConfiguration,
