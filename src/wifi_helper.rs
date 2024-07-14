@@ -1,4 +1,4 @@
-use esp_idf_hal::sys::esp_wifi_set_country;
+use esp_idf_hal::sys::{esp_wifi_set_country, esp_wifi_set_max_tx_power};
 use esp_idf_hal::{modem::Modem, peripheral::Peripheral, sys::wifi_country_t};
 use esp_idf_svc::hal::sys::esp;
 use esp_idf_svc::wifi::AccessPointConfiguration;
@@ -35,6 +35,10 @@ pub fn connect_wifi<'a>(
 
     wifi.start()?;
     info!("Wifi started");
+
+    unsafe {
+        info!("ESP SET TX POWER: {}", esp_wifi_set_max_tx_power(34));
+    }
 
     wifi.connect()?;
     info!("Wifi connected");
