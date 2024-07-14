@@ -11,6 +11,7 @@ h2{text-align: center;font-variant: small-caps;margin-top: 0;}
 input,select{font-size: 16px;width: 100%;margin-top: 0.5em;margin-bottom: 2em;border: none;border-bottom: 1px solid lightgray;padding: 8px;background-color: #00000000;}
 input:focus,select:focus{outline: none; border-color: var(--green);}
 input[type="submit"]{margin: 16px 0 0 0;padding: 16px 0;width: 100%;border-radius: 8px;background-color: var(--green);background: linear-gradient(90deg, var(--orange) 0%, var(--purple) 100%);color: white;font-size: 1.5em;}
+input[type="submit"]:disabled{opacity: 0.3;}
 .prefix{display: flex;flex-direction: row;}
 .prefix span{margin-top: calc(0.5em + 8px);}
 .prefix input{ padding-left: 0;}
@@ -44,7 +45,7 @@ input[type="submit"]{margin: 16px 0 0 0;padding: 16px 0;width: 100%;border-radiu
 <div class="tab_content">
 {FORM_SETTINGS}
 </div>
-<input type="submit" value="🚀 Save">
+<input type="submit" value="🚀 Save" onclick="let f=this.closest('form');if(f.checkValidity()){this.disabled = true;f.submit();}">
 </form>
 </div>
 <script type="text/javascript">
