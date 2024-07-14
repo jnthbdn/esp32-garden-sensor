@@ -46,60 +46,29 @@ impl NvsConfiguration {
         self.read_string(KEY_SSID, "")
     }
 
-    // pub fn set_ssid(&mut self, ssid: &str) -> Result<(), StringEspError> {
-    //     self.store_string(KEY_SSID, NvsConfiguration::trunc_string(ssid, 32))
-    // }
-
     pub fn get_passphrase(&self) -> String {
         self.read_string(KEY_PASSPHRASE, "")
     }
-
-    // pub fn set_passphrase(&mut self, passphrase: &str) -> Result<(), StringEspError> {
-    //     self.store_string(
-    //         KEY_PASSPHRASE,
-    //         NvsConfiguration::trunc_string(passphrase, 63),
-    //     )
-    // }
 
     pub fn get_name(&self) -> String {
         self.read_string(KEY_NAME, "")
     }
 
-    // pub fn set_name(&mut self, name: &str) -> Result<(), StringEspError> {
-    //     self.store_string(KEY_NAME, NvsConfiguration::trunc_string(name, 32))
-    // }
-
     pub fn get_id(&self) -> u32 {
         self.read_u32(KEY_ID, 0)
     }
-
-    // pub fn set_id(&mut self, value: u32) -> Result<(), StringEspError> {
-    //     self.store_unsigned(KEY_ID, value)
-    // }
 
     pub fn get_deep_sleep_duration(&self) -> u64 {
         self.read_u64(KEY_SLEEP, 3600_000_000)
     }
 
-    // pub fn set_deep_sleep_duration(&mut self, value: u64) -> Result<(), StringEspError> {
-    //     self.store_unsigned_64(KEY_SLEEP, value)
-    // }
-
-    pub fn get_tx_power(&self) -> u8 {
-        self.read_u8(KEY_TX_POWER, 80)
+    pub fn get_tx_power(&self) -> i8 {
+        self.read_u8(KEY_TX_POWER, 80) as i8
     }
-
-    // pub fn set_vhigh_moisture(&mut self, value: f32) -> Result<(), StringEspError> {
-    //     self.store_float(KEY_VHIGH, value)
-    // }
 
     pub fn get_vhigh_moisture(&self) -> f32 {
         self.read_float(KEY_VHIGH, 0.0)
     }
-
-    // pub fn set_vlow_moisture(&mut self, value: f32) -> Result<(), StringEspError> {
-    //     self.store_float(KEY_VLOW, value)
-    // }
 
     pub fn get_vlow_moisture(&self) -> f32 {
         self.read_float(KEY_VLOW, 0.0)
