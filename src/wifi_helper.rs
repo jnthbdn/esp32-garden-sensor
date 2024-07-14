@@ -37,7 +37,7 @@ pub fn connect_wifi<'a>(
     info!("Wifi started");
 
     unsafe {
-        info!("ESP SET TX POWER: {}", esp_wifi_set_max_tx_power(34));
+        esp_wifi_set_max_tx_power(config.get_tx_power());
     }
 
     wifi.connect()?;
@@ -96,18 +96,9 @@ pub fn create_ap<'a>(
             ..Default::default()
         },
     );
-    // let wifi_configuration = Configuration::AccessPoint(AccessPointConfiguration {
-    //     ssid: "ESP Config".try_into().unwrap(),
-    //     ssid_hidden: false,
-    //     auth_method: AuthMethod::None,
-    //     max_connections: 5,
-    //     channel: 11,
-    //     ..Default::default()
-    // });
 
     wifi.set_configuration(&wifi_configuration)?;
     wifi.start()?;
-    // wifi.wait_netif_up()?;
 
     Ok(wifi)
 }
