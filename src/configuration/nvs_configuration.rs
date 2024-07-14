@@ -83,16 +83,8 @@ impl NvsConfiguration {
         value: &str,
         max_size: usize,
     ) -> Result<(), StringEspError> {
-        let pad_str = Self::trunc_pad_string(value, max_size);
-        log::info!(
-            "trunc pad string '{}' to '{}' ({:?})",
-            &value,
-            &pad_str,
-            &pad_str.as_bytes()
-        );
-
         self.nvs
-            .set_str(key, &pad_str)
+            .set_str(key, &Self::trunc_pad_string(value, max_size))
             .map_err(|e| StringEspError("Failed to store string", e))
     }
 
