@@ -32,7 +32,7 @@ fn main() -> anyhow::Result<()> {
 
     let mut board = Board::new(&main_config, peripherals.adc1, peripherals.pins)?;
 
-    board.leds.white.set_low()?;
+    board.leds.green.set_low()?;
     board.leds.orange.set_low()?;
 
     FreeRtos::delay_ms(1000);
@@ -74,9 +74,9 @@ fn main() -> anyhow::Result<()> {
         }
 
         loop {
-            board.leds.white.set_high()?;
+            board.leds.green.set_high()?;
             FreeRtos::delay_ms(100);
-            board.leds.white.set_low()?;
+            board.leds.green.set_low()?;
             FreeRtos::delay_ms(100);
         }
     }
@@ -90,7 +90,7 @@ fn main_settings(
     board: &mut Board,
     wifi: BlockingWifi<EspWifi>,
 ) -> anyhow::Result<()> {
-    board.leds.white.set_high()?;
+    board.leds.green.set_high()?;
 
     let mutex_config = Mutex::new(main_config);
     let mutex_wifi = Mutex::new(wifi);
@@ -139,9 +139,8 @@ fn main_settings(
                             let data = post_data.read_value(&elem.form_name).unwrap();
 
                             match elem.data_type {
-                                configuration::MapFormType::String(_) => {
-                                    mainconfig_lock.store_string(&elem.nvs_key, data.as_str())?
-                                }
+                                configuration::MapFormType::String(_, max_size) => mainconfig_lock
+                                    .store_string(&elem.nvs_key, data.as_str(), max_size)?,
 
                                 configuration::MapFormType::Float(_) => mainconfig_lock
                                     .store_float(
@@ -149,14 +148,14 @@ fn main_settings(
                                         f32::from_str(data.as_str()).unwrap(),
                                     )?,
 
-                                configuration::MapFormType::UHex(_) => mainconfig_lock
-                                    .store_unsigned(
+                                configuration::MapFormType::U32Hex(_) => mainconfig_lock
+                                    .store_u32(
                                         &elem.nvs_key,
                                         u32::from_str_radix(data.as_str(), 16).unwrap(),
                                     )?,
 
                                 configuration::MapFormType::Unsigned64(_) => mainconfig_lock
-                                    .store_unsigned_64(
+                                    .store_u64(
                                         &elem.nvs_key,
                                         u64::from_str(data.as_str()).unwrap(),
                                     )?,
