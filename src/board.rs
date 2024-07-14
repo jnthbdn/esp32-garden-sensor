@@ -34,8 +34,8 @@ pub struct Buttons<'a> {
 }
 
 pub struct OnBoardLed<'a> {
-    pub orange: PinDriver<'a, Gpio18, Output>,
-    pub white: PinDriver<'a, Gpio19, Output>,
+    pub orange: PinDriver<'a, Gpio6, Output>,
+    pub green: PinDriver<'a, Gpio7, Output>,
 }
 
 pub struct BatterySensor<'a> {
@@ -68,8 +68,8 @@ impl<'a> Board<'a> {
                 settings: PinDriver::input(pins.gpio5)?,
             },
             leds: OnBoardLed {
-                orange: PinDriver::output(pins.gpio18)?,
-                white: PinDriver::output(pins.gpio19)?,
+                orange: PinDriver::output(pins.gpio6)?,
+                green: PinDriver::output(pins.gpio7)?,
             },
         };
 
