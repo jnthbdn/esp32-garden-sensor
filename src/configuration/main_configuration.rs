@@ -56,7 +56,7 @@ pub const MAP_NVS_FORM: &[MapFormElement] = &[
     },
     MapFormElement {
         nvs_key: &KEY_TX_POWER,
-        form_name: "txpxr",
+        form_name: "txpwr",
         template_id: Some("{TXPWR}"),
         data_type: MapFormType::Unsigned8(80),
     },
