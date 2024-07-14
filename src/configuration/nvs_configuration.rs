@@ -1,6 +1,7 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use esp_idf_svc::nvs::{EspCustomNvsPartition, EspNvs, NvsCustom};
+use pad::{Alignment, PadStr};
 
 use crate::string_error::{StringError, StringEspError};
 
@@ -8,6 +9,8 @@ static IS_NVS_TAKEN: AtomicBool = AtomicBool::new(false);
 
 const PARTITION_NAME: &str = "config";
 const NAMESPACE: &str = "config";
+
+const PAD_CHAR: char = 0x03 as char;
 
 pub const KEY_SSID: &str = "SSID";
 pub const KEY_PASSPHRASE: &str = "PASS";
@@ -80,9 +83,16 @@ impl NvsConfiguration {
         value: &str,
         max_size: usize,
     ) -> Result<(), StringEspError> {
-        self.remove_existing_key(key)?;
+        let pad_str = Self::trunc_pad_string(value, max_size);
+        log::info!(
+            "trunc pad string '{}' to '{}' ({:?})",
+            &value,
+            &pad_str,
+            &pad_str.as_bytes()
+        );
+
         self.nvs
-            .set_str(key, &Self::trunc_pad_string(value, max_size))
+            .set_str(key, &pad_str)
             .map_err(|e| StringEspError("Failed to store string", e))
     }
 
@@ -94,15 +104,21 @@ impl NvsConfiguration {
             return default.to_string();
         }
 
-        self.nvs
+        let result = self
+            .nvs
             .get_str(key, &mut buf)
             .unwrap_or(None)
             .unwrap_or(default)
-            .to_string()
+            .to_string();
+
+        result
+            .split_once(PAD_CHAR)
+            .unwrap_or((&result, ""))
+            .0
+            .to_owned()
     }
 
     pub fn store_float(&mut self, key: &str, value: f32) -> Result<(), StringEspError> {
-        self.remove_existing_key(key)?;
         let val = u32::from_ne_bytes(value.to_ne_bytes());
         self.nvs
             .set_u32(key, val)
@@ -117,7 +133,6 @@ impl NvsConfiguration {
     }
 
     pub fn store_u8(&mut self, key: &str, value: u8) -> Result<(), StringEspError> {
-        self.remove_existing_key(key)?;
         self.nvs
             .set_u8(key, value)
             .map_err(|e| StringEspError("Failed to store U8", e))
@@ -128,7 +143,6 @@ impl NvsConfiguration {
     }
 
     pub fn store_u32(&mut self, key: &str, value: u32) -> Result<(), StringEspError> {
-        self.remove_existing_key(key)?;
         self.nvs
             .set_u32(key, value)
             .map_err(|e| StringEspError("Failed to store U32", e))
@@ -139,7 +153,6 @@ impl NvsConfiguration {
     }
 
     pub fn store_u64(&mut self, key: &str, value: u64) -> Result<(), StringEspError> {
-        self.remove_existing_key(key)?;
         self.nvs
             .set_u64(key, value)
             .map_err(|e| StringEspError("Failed to store U64", e))
@@ -150,24 +163,7 @@ impl NvsConfiguration {
     }
 
     fn trunc_pad_string(s: &str, max: usize) -> String {
-        match s.char_indices().nth(max) {
-            None => format!("{:\0<padlen$}", s, padlen = max),
-            Some((idx, _)) => s[..idx].to_string(),
-        }
-    }
-
-    fn remove_existing_key(&mut self, key: &str) -> Result<(), StringEspError> {
-        if self
-            .nvs
-            .contains(key)
-            .map_err(|e| StringEspError("Unable to find key", e))?
-        {
-            self.nvs
-                .remove(key)
-                .map_err(|e| StringEspError("Unable to remoive key", e))?;
-        }
-
-        Ok(())
+        s.pad(max, PAD_CHAR, Alignment::Left, true)
     }
 }
 
