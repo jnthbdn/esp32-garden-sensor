@@ -34,6 +34,6 @@ impl<'a, ADC: Adc, PADC: ADCPin<Adc = ADC> + 'a> BatterySensor<'a, ADC, PADC> {
         let slope = 100.0 / (MAX_BAT_VOLT - MIN_BAT_VOLT);
         let level = slope * (adc_value - MIN_BAT_VOLT);
 
-        level.min(0.0).max(100.0)
+        level.clamp(0.0, 100.0)
     }
 }
