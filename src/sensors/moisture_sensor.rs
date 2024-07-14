@@ -24,13 +24,17 @@ impl<'a, ADC: Adc, PEN: OutputPin, PADC: ADCPin<Adc = ADC> + 'a>
         voltage_high: f32,
         voltage_low: f32,
     ) -> anyhow::Result<Self> {
-        Ok(Self {
+        let mut s = Self {
             adc_ref: adc,
             pin_adc: AdcChannelDriver::new(pin_adc)?,
             pin_enable: PinDriver::output(pin_enable)?,
             v_high: voltage_high,
             v_low: voltage_low,
-        })
+        };
+
+        s.pin_enable.set_low()?;
+
+        Ok(s)
     }
 
     pub fn read_raw_value(&mut self) -> u16 {
