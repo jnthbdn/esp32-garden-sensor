@@ -34,7 +34,7 @@ fn generate_html(
         }
 
         template = match elem.data_type {
-            crate::configuration::MapFormType::String(default) => template.replace(
+            crate::configuration::MapFormType::String(default, _) => template.replace(
                 elem.template_id.unwrap(),
                 &main_config.read_string(&elem.nvs_key, default),
             ),
@@ -44,16 +44,14 @@ fn generate_html(
                 &format!("{}", main_config.read_float(&elem.nvs_key, default)),
             ),
 
-            crate::configuration::MapFormType::UHex(default) => template.replace(
+            crate::configuration::MapFormType::U32Hex(default) => template.replace(
                 elem.template_id.unwrap(),
-                &format!("{:x}", main_config.read_unsigned(&elem.nvs_key, default)),
+                &format!("{:x}", main_config.read_u32(&elem.nvs_key, default)),
             ),
 
             crate::configuration::MapFormType::Unsigned64(default) => template.replace(
                 elem.template_id.unwrap(),
-                &main_config
-                    .read_unsigned_64(&elem.nvs_key, default)
-                    .to_string(),
+                &main_config.read_u64(&elem.nvs_key, default).to_string(),
             ),
         };
     }
