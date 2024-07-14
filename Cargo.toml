@@ -36,6 +36,7 @@ esp-idf-hal = "^0.43"
 anyhow = "1"
 embedded-svc = "0.26.4"
 percent-encoding = "2.3.1"
+pad = "0.1.6"
 
 [build-dependencies]
 embuild = "0.31.3"
