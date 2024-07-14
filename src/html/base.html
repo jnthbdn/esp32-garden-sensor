@@ -39,6 +39,7 @@ input[type="submit"]{margin: 16px 0 0 0;padding: 16px 0;width: 100%;border-radiu
 <label for="name">Name: </label><input type="text" id="name" name="name" value="{NAME}" maxlength="32" required/><br/>
 <label for="id">ID: </label><div class="prefix"><span>0x</span><input type="text" id="id" name="id" value="{ID}" maxlength="8" pattern="^[0-9ABCDEFabcdef]{1,8}$" required/></div><br/>
 <label for="sleep">Deep sleep time (microseconds): </label><div class="postfix"><input type="number" id="sleep" name="sleep" value="{SLEEP}" min="10000000" max="86400000000" step="1" required/><span>µs</span></div><br/>
+<label for="tx">TX Power: </label><div class="postfix"><input type="number" id="txpwr" name="txpwr" value="{TXPWR}" min="8" max="80" step="1" required/><span>x&nbsp;0.25&nbsp;dBm</span></div><br/>
 </div>
 <div class="tab_content">
 {FORM_SETTINGS}
