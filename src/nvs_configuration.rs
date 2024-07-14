@@ -14,6 +14,7 @@ pub const KEY_PASSPHRASE: &str = "PASS";
 pub const KEY_ID: &str = "ID";
 pub const KEY_NAME: &str = "NAME";
 pub const KEY_SLEEP: &str = "SLEEP";
+pub const KEY_TX_POWER: &str = "TX_POWER";
 
 pub const KEY_VHIGH: &str = "VHIGH";
 pub const KEY_VLOW: &str = "VLOW";
@@ -45,65 +46,74 @@ impl NvsConfiguration {
         self.read_string(KEY_SSID, "")
     }
 
-    pub fn set_ssid(&mut self, ssid: &str) -> Result<(), StringEspError> {
-        self.store_string(KEY_SSID, NvsConfiguration::trunc_string(ssid, 32))
-    }
+    // pub fn set_ssid(&mut self, ssid: &str) -> Result<(), StringEspError> {
+    //     self.store_string(KEY_SSID, NvsConfiguration::trunc_string(ssid, 32))
+    // }
 
     pub fn get_passphrase(&self) -> String {
         self.read_string(KEY_PASSPHRASE, "")
     }
 
-    pub fn set_passphrase(&mut self, passphrase: &str) -> Result<(), StringEspError> {
-        self.store_string(
-            KEY_PASSPHRASE,
-            NvsConfiguration::trunc_string(passphrase, 63),
-        )
-    }
+    // pub fn set_passphrase(&mut self, passphrase: &str) -> Result<(), StringEspError> {
+    //     self.store_string(
+    //         KEY_PASSPHRASE,
+    //         NvsConfiguration::trunc_string(passphrase, 63),
+    //     )
+    // }
 
     pub fn get_name(&self) -> String {
         self.read_string(KEY_NAME, "")
     }
 
-    pub fn set_name(&mut self, name: &str) -> Result<(), StringEspError> {
-        self.store_string(KEY_NAME, NvsConfiguration::trunc_string(name, 32))
-    }
+    // pub fn set_name(&mut self, name: &str) -> Result<(), StringEspError> {
+    //     self.store_string(KEY_NAME, NvsConfiguration::trunc_string(name, 32))
+    // }
 
     pub fn get_id(&self) -> u32 {
-        self.read_unsigned(KEY_ID, 0)
+        self.read_u32(KEY_ID, 0)
     }
 
-    pub fn set_id(&mut self, value: u32) -> Result<(), StringEspError> {
-        self.store_unsigned(KEY_ID, value)
-    }
+    // pub fn set_id(&mut self, value: u32) -> Result<(), StringEspError> {
+    //     self.store_unsigned(KEY_ID, value)
+    // }
 
     pub fn get_deep_sleep_duration(&self) -> u64 {
-        self.read_unsigned_64(KEY_SLEEP, 3600_000_000)
+        self.read_u64(KEY_SLEEP, 3600_000_000)
     }
 
-    pub fn set_deep_sleep_duration(&mut self, value: u64) -> Result<(), StringEspError> {
-        self.store_unsigned_64(KEY_SLEEP, value)
+    // pub fn set_deep_sleep_duration(&mut self, value: u64) -> Result<(), StringEspError> {
+    //     self.store_unsigned_64(KEY_SLEEP, value)
+    // }
+
+    pub fn get_tx_power(&self) -> u8 {
+        self.read_u8(KEY_TX_POWER, 80)
     }
 
-    pub fn set_vhigh_moisture(&mut self, value: f32) -> Result<(), StringEspError> {
-        self.store_float(KEY_VHIGH, value)
-    }
+    // pub fn set_vhigh_moisture(&mut self, value: f32) -> Result<(), StringEspError> {
+    //     self.store_float(KEY_VHIGH, value)
+    // }
 
     pub fn get_vhigh_moisture(&self) -> f32 {
         self.read_float(KEY_VHIGH, 0.0)
     }
 
-    pub fn set_vlow_moisture(&mut self, value: f32) -> Result<(), StringEspError> {
-        self.store_float(KEY_VLOW, value)
-    }
+    // pub fn set_vlow_moisture(&mut self, value: f32) -> Result<(), StringEspError> {
+    //     self.store_float(KEY_VLOW, value)
+    // }
 
     pub fn get_vlow_moisture(&self) -> f32 {
         self.read_float(KEY_VLOW, 0.0)
     }
 
-    pub fn store_string(&mut self, key: &str, value: &str) -> Result<(), StringEspError> {
+    pub fn store_string(
+        &mut self,
+        key: &str,
+        value: &str,
+        max_size: usize,
+    ) -> Result<(), StringEspError> {
         self.remove_existing_key(key)?;
         self.nvs
-            .set_str(key, value)
+            .set_str(key, &Self::trunc_pad_string(value, max_size))
             .map_err(|e| StringEspError("Failed to store string", e))
     }
 
@@ -137,32 +147,43 @@ impl NvsConfiguration {
         }
     }
 
-    pub fn store_unsigned(&mut self, key: &str, value: u32) -> Result<(), StringEspError> {
+    pub fn store_u8(&mut self, key: &str, value: u8) -> Result<(), StringEspError> {
+        self.remove_existing_key(key)?;
+        self.nvs
+            .set_u8(key, value)
+            .map_err(|e| StringEspError("Failed to store U8", e))
+    }
+
+    pub fn read_u8(&self, key: &str, default: u8) -> u8 {
+        self.nvs.get_u8(key).unwrap_or(None).unwrap_or(default)
+    }
+
+    pub fn store_u32(&mut self, key: &str, value: u32) -> Result<(), StringEspError> {
         self.remove_existing_key(key)?;
         self.nvs
             .set_u32(key, value)
-            .map_err(|e| StringEspError("Failed to store unsigned", e))
+            .map_err(|e| StringEspError("Failed to store U32", e))
     }
 
-    pub fn read_unsigned(&self, key: &str, default: u32) -> u32 {
+    pub fn read_u32(&self, key: &str, default: u32) -> u32 {
         self.nvs.get_u32(key).unwrap_or(None).unwrap_or(default)
     }
 
-    pub fn store_unsigned_64(&mut self, key: &str, value: u64) -> Result<(), StringEspError> {
+    pub fn store_u64(&mut self, key: &str, value: u64) -> Result<(), StringEspError> {
         self.remove_existing_key(key)?;
         self.nvs
             .set_u64(key, value)
-            .map_err(|e| StringEspError("Failed to store u64", e))
+            .map_err(|e| StringEspError("Failed to store U64", e))
     }
 
-    pub fn read_unsigned_64(&self, key: &str, default: u64) -> u64 {
+    pub fn read_u64(&self, key: &str, default: u64) -> u64 {
         self.nvs.get_u64(key).unwrap_or(None).unwrap_or(default)
     }
 
-    fn trunc_string(s: &str, max: usize) -> &str {
+    fn trunc_pad_string(s: &str, max: usize) -> String {
         match s.char_indices().nth(max) {
-            None => s,
-            Some((idx, _)) => &s[..idx],
+            None => format!("{:\0<padlen$}", s, padlen = max),
+            Some((idx, _)) => s[..idx].to_string(),
         }
     }
 
