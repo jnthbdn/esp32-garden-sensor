@@ -20,6 +20,7 @@ input[type="submit"]:disabled{opacity: 0.3;}
 .postfix input{ padding-right: 0;}
 #tabs{display: flex;flex-direction: row;margin: 16px -5px;}
 .tab{flex: 1;background-color: #EEE;padding: 16px;border: none;text-align: center;cursor: pointer;fill: #777;}
+.tab:not(:first-of-type){border-left: 1px solid #CCC;}
 .tab svg{ width: 30px;height: auto;}
 .tab.open{border-top: 2px solid var(--green);background-color: #FFF;fill: var(--green);}
 .tab_content{margin: 0;padding: 0;display: none;}
@@ -32,6 +33,7 @@ input[type="submit"]:disabled{opacity: 0.3;}
 <div id="tabs">
 <div class="tab open" onclick="opentab(0)" title="Wireless settings"><svg viewBox="4 7 16 16"><path d="M12 19a1 1 0 1 0 0 2v-2Zm.01 2a1 1 0 1 0 0-2v2Zm2.68-3.96a1 1 0 0 0 1.347-1.48l-1.346 1.48Zm3.364-3.7a1 1 0 0 0 1.346-1.48l-1.346 1.48Zm-10.09 2.22a1 1 0 0 0 1.346 1.48l-1.346-1.48ZM4.6 11.86a1 1 0 1 0 1.345 1.48l-1.345-1.48ZM12 21h.01v-2H12v2Zm0-5c1.036 0 1.979.393 2.69 1.04l1.345-1.48A5.982 5.982 0 0 0 12 14v2Zm0-5c2.331 0 4.454.886 6.053 2.34l1.346-1.48A10.964 10.964 0 0 0 12 9v2ZM9.31 17.04A3.982 3.982 0 0 1 12 16v-2a5.982 5.982 0 0 0-4.036 1.56l1.346 1.48Zm-3.364-3.7A8.964 8.964 0 0 1 12 11V9a10.964 10.964 0 0 0-7.4 2.86l1.346 1.48Z"/></svg></div>
 <div class="tab" onclick="opentab(1)" title="Sensor settings"><svg viewBox="0 0 512 512"><path d="M424 24h48v52h-48zm0 164h48v300h-48zm60.79-88h-73.578C396.188 100 384 112.188 384 127.211v9.578c0 15.023 12.188 27.21 27.211 27.21h73.578c15.023 0 27.21-12.187 27.21-27.21v-9.578C512 112.188 499.813 100 484.79 100zM231.985 24h48v276.641h-48zm0 388.641h48V488h-48zm60.789-88h-73.578c-15.023 0-27.21 12.187-27.21 27.211v9.578c0 15.024 12.187 27.211 27.21 27.211h73.578c15.023 0 27.211-12.187 27.211-27.211v-9.578c0-15.024-12.188-27.211-27.211-27.211zM40 308h48v180H40zm0-284h48v172H40zm60.79 196H27.211C12.188 220 0 232.188 0 247.211v9.578C0 271.813 12.188 284 27.211 284h73.578c15.023 0 27.21-12.187 27.21-27.21v-9.578C128 232.188 115.813 220 100.79 220z"/></svg></div>
+<div class="tab" onclick="opentab(2)" title="Advanced settings"><svg viewBox="11 5 49 49"><path d="M13.32 44.31a4.5 4.5 0 0 0 6.36 6.36l14.76-14.76-6.36-6.36ZM50.2 16.96l6.43-3.33L60 7.13l-3.14-3.14-6.5 3.37-3.33 6.42-7.82 7.83 3.17 3.18z"/><path d="M51.61 34H51a8.9 8.9 0 0 0-3.11.58L29.45 16.09A8.9 8.9 0 0 0 30 13l-.06-.6a8.9 8.9 0 0 0-12.75-7.51l6 6a3 3 0 0 1 .68 1.08A3 3 0 0 1 21 16a2.9 2.9 0 0 1-1-.21 3.15 3.15 0 0 1-1.08-.67l-6-6a8.9 8.9 0 0 0 7.49 12.78l.59.1a8.9 8.9 0 0 0 3.11-.58L42.6 39.84A8.9 8.9 0 0 0 42 43l.06.6A9 9 0 0 0 51 51.94a8.7 8.7 0 0 0 3.85-.9l-6-6a3.1 3.1 0 0 1-.64-1.04A3 3 0 0 1 51 40a2.9 2.9 0 0 1 1 .21 2.7 2.7 0 0 1 1.08.67l6 6A8.9 8.9 0 0 0 51.61 34"/></svg></div>
 </div>
 <div class="tab_content">
 <label for="ssid">SSID: </label><select id="ssid_list" onchange="select_change(this)"></select><br/>
@@ -39,11 +41,13 @@ input[type="submit"]:disabled{opacity: 0.3;}
 <label for="pass">Passphrase: </label><div class="postfix"><input type="password" id="pass" name="pass" value="{PASS}" placeholder="Passphrase" maxlength="63"/><span><a onclick="show_hide('pass')" title="Show/Hide password" style="cursor: pointer;">👁️</a></span></div><br/>
 <label for="name">Name: </label><input type="text" name="name" value="{NAME}" maxlength="32" required/><br/>
 <label for="id">ID: </label><div class="prefix"><span>0x</span><input type="text" name="id" value="{ID}" maxlength="8" pattern="^[0-9ABCDEFabcdef]{1,8}$" required/></div><br/>
-<label for="sleep">Deep sleep time (microseconds): </label><div class="postfix"><input type="number" name="sleep" value="{SLEEP}" min="10000000" max="86400000000" step="1" required/><span>µs</span></div><br/>
-<label for="tx">TX Power: </label><div class="postfix"><input type="number" name="txpwr" value="{TXPWR}" min="8" max="80" step="1" required/><span>x&nbsp;0.25&nbsp;dBm</span></div><br/>
 </div>
 <div class="tab_content">
 {FORM_SETTINGS}
+</div>
+<div class="tab_content">
+    <label for="sleep">Deep sleep time (microseconds): </label><div class="postfix"><input type="number" name="sleep" value="{SLEEP}" min="10000000" max="86400000000" step="1" required/><span>µs</span></div><br/>
+    <label for="tx">TX Power: </label><div class="postfix"><input type="number" name="txpwr" value="{TXPWR}" min="8" max="80" step="1" required/><span>x&nbsp;0.25&nbsp;dBm</span></div><br/>
 </div>
 <input type="submit" value="🚀 Save" onclick="let f=this.closest('form');if(f.checkValidity()){this.disabled = true;f.submit();}">
 </form>
