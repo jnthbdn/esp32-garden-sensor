@@ -3,7 +3,7 @@ use std::sync::Mutex;
 use std::time::SystemTime;
 
 use anyhow::Ok;
-use board::Board;
+use board::board::Board;
 use configuration::{main_configuration, nvs_configuration::NvsConfiguration};
 use esp_idf_hal::delay::FreeRtos;
 use esp_idf_hal::io::Write;
@@ -14,7 +14,12 @@ use esp_idf_svc::wifi::{BlockingWifi, EspWifi};
 use log::{error, info};
 use post_data::PostData;
 
-mod board;
+mod board {
+    pub mod board;
+    pub mod buttons;
+    pub mod on_board_led;
+    pub mod sensors;
+}
 mod sensors {
     pub mod battery_sensor;
     pub mod moisture_sensor;
