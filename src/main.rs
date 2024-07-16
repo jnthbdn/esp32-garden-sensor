@@ -217,17 +217,7 @@ fn main_sensor<'a>(board: &mut Board, main_config: NvsConfiguration) -> anyhow::
 
     board.leds.orange.set_low()?;
 
-    info!(
-        "Battery Status: {:.2}% ({:.2} V)",
-        board.sensors.battery_sensor.get_level(),
-        board.sensors.battery_sensor.read_raw_value() as f32 / 1000.0
-    );
-
-    info!(
-        "Moisture level: {:.2}% ({:.2} V)",
-        board.sensors.moisture_sensor.get_level(),
-        board.sensors.moisture_sensor.read_raw_value() as f32 / 1000.0
-    );
+    info!("JSON DATA: {}", board.generate_json(&main_config));
 
     info!("Going to sleep !");
 
