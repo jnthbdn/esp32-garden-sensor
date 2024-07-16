@@ -4,6 +4,7 @@ use esp_idf_hal::{
     adc::{config::Config, AdcDriver, ADC1},
     gpio::*,
 };
+use serde_json::json;
 
 use crate::{
     configuration::nvs_configuration::NvsConfiguration,
@@ -48,5 +49,14 @@ impl<'a> Board<'a> {
 
         s.buttons.settings.set_pull(Pull::Up)?;
         Ok(s)
+    }
+
+    pub fn generate_json(&mut self, main_config: &NvsConfiguration) -> String {
+        json!({
+            "name": main_config.get_name(),
+            "id": main_config.get_id(),
+            "sensors": self.sensors.to_json()
+        })
+        .to_string()
     }
 }
