@@ -10,21 +10,7 @@ use crate::{
     sensors::{battery_sensor::BatterySensor, moisture_sensor::MoistureSensor},
 };
 
-#[cfg(feature = "moisture-sensor")]
-pub struct Sensors<'a> {
-    pub moisture_sensor: MoistureSensor<'a, ADC1, Gpio2, Gpio4>,
-    pub battery_sensor: BatterySensor<'a, ADC1, Gpio3>,
-}
-
-#[cfg(feature = "moisture-sensor")]
-pub struct Buttons<'a> {
-    pub settings: PinDriver<'a, Gpio5, Input>,
-}
-
-pub struct OnBoardLed<'a> {
-    pub orange: PinDriver<'a, Gpio6, Output>,
-    pub green: PinDriver<'a, Gpio7, Output>,
-}
+use super::{buttons::Buttons, on_board_led::OnBoardLed, sensors::Sensors};
 
 pub struct Board<'a> {
     pub sensors: Sensors<'a>,
@@ -39,9 +25,9 @@ impl<'a> Board<'a> {
             &Config::new().calibration(true),
         )?));
 
-        #[cfg(feature = "moisture-sensor")]
         let mut s = Self {
             sensors: Sensors {
+                #[cfg(feature = "moisture-sensor")]
                 moisture_sensor: MoistureSensor::new(
                     adc_refcell.clone(),
                     pins.gpio2,
