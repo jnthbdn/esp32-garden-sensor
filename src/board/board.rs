@@ -51,12 +51,11 @@ impl<'a> Board<'a> {
         Ok(s)
     }
 
-    pub fn generate_json(&mut self, main_config: &NvsConfiguration) -> String {
+    pub fn generate_json(&mut self, main_config: &NvsConfiguration) -> serde_json::Value {
         json!({
             "name": main_config.get_name(),
             "id": main_config.get_id(),
             "sensors": self.sensors.to_json()
         })
-        .to_string()
     }
 }

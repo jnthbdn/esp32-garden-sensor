@@ -11,12 +11,11 @@ pub struct Sensors<'a> {
 }
 
 impl<'a> Sensors<'a> {
-    pub fn to_json(&mut self) -> String {
+    pub fn to_json(&mut self) -> serde_json::Value {
         #[cfg(feature = "moisture-sensor")]
         json!( {
                 "battery": self.battery_sensor.get_level(),
                 "moisture": self.moisture_sensor.get_level(),
         })
-        .to_string()
     }
 }
