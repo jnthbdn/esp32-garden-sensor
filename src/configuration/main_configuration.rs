@@ -1,7 +1,7 @@
 use super::nvs_configuration::*;
 
-#[cfg(all(feature = "moisture-sensor", feature = "water-level-sensor"))]
-compile_error!("Choose only one sensor.");
+// #[cfg(all(feature = "moisture-sensor", feature = "water-level-sensor"))]
+// compile_error!("Choose only one sensor.");
 
 #[cfg(not(any(feature = "moisture-sensor", feature = "water-level-sensor")))]
 compile_error!("Choose one sensor feature.");
