@@ -8,7 +8,9 @@ use serde_json::json;
 
 use crate::{
     configuration::nvs_configuration::NvsConfiguration,
-    sensors::{battery_sensor::BatterySensor, moisture_sensor::MoistureSensor},
+    sensors::{
+        battery_sensor::BatterySensor, hcsr04_sensor::HCSR04Sensor, moisture_sensor::MoistureSensor,
+    },
 };
 
 use super::{buttons::Buttons, on_board_led::OnBoardLed, sensors::Sensors};
@@ -36,6 +38,16 @@ impl<'a> Board<'a> {
                     main_config.get_vhigh_moisture(),
                     main_config.get_vlow_moisture(),
                 )?,
+
+                #[cfg(feature = "water-level-sensor")]
+                water_level_sensor: HCSR04Sensor::new(
+                    pins.gpio10,
+                    pins.gpio0,
+                    pins.gpio1,
+                    1000.0,
+                    30.0,
+                )?,
+
                 battery_sensor: BatterySensor::new(adc_refcell.clone(), pins.gpio3)?,
             },
             buttons: Buttons {
