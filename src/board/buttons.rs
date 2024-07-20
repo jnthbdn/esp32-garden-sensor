@@ -1,4 +1,4 @@
-use esp_idf_hal::gpio::*;
+use esp_idf_svc::hal::gpio::*;
 
 pub struct Buttons<'a> {
     #[cfg(feature = "moisture-sensor")]

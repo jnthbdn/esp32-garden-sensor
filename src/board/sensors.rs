@@ -1,4 +1,4 @@
-use esp_idf_hal::{adc::ADC1, gpio::*};
+use esp_idf_svc::hal::{adc::ADC1, gpio::*};
 use serde_json::{json, Map, Value};
 
 use crate::sensors::{

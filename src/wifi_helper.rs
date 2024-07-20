@@ -1,6 +1,6 @@
-use esp_idf_hal::sys::{esp_wifi_set_country, esp_wifi_set_max_tx_power};
-use esp_idf_hal::{modem::Modem, peripheral::Peripheral, sys::wifi_country_t};
 use esp_idf_svc::hal::sys::esp;
+use esp_idf_svc::hal::sys::{esp_wifi_set_country, esp_wifi_set_max_tx_power};
+use esp_idf_svc::hal::{modem::Modem, peripheral::Peripheral, sys::wifi_country_t};
 use esp_idf_svc::wifi::AccessPointConfiguration;
 use esp_idf_svc::{
     eventloop::EspSystemEventLoop,

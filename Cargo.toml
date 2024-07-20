@@ -32,7 +32,6 @@ embassy = ["esp-idf-svc/embassy-sync", "esp-idf-svc/critical-section", "esp-idf-
 [dependencies]
 log = { version = "0.4", default-features = false }
 esp-idf-svc = { version = "0.48", default-features = false }
-esp-idf-hal = "^0.43"
 anyhow = "1"
 embedded-svc = "0.26.4"
 percent-encoding = "2.3.1"

@@ -1,6 +1,6 @@
 use std::time::SystemTime;
 
-use esp_idf_hal::{
+use esp_idf_svc::hal::{
     delay::Delay,
     gpio::{Input, InputPin, Output, OutputPin, PinDriver},
 };

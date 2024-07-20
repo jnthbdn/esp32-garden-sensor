@@ -1,6 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
-use esp_idf_hal::{
+use esp_idf_svc::hal::{
     adc::{config::Config, AdcDriver, ADC1},
     gpio::*,
 };

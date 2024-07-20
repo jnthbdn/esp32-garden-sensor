@@ -1,6 +1,6 @@
 use core::fmt;
 
-use esp_idf_hal::sys::EspError;
+use esp_idf_svc::hal::sys::EspError;
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub struct StringError(pub &'static str);
