@@ -5,14 +5,14 @@ use std::time::SystemTime;
 use anyhow::Ok;
 use board::board::Board;
 use configuration::{main_configuration, nvs_configuration::NvsConfiguration};
-use esp_idf_hal::delay::FreeRtos;
-use esp_idf_hal::io::Write;
-use esp_idf_hal::peripherals::Peripherals;
-use esp_idf_hal::sys::esp_deep_sleep;
+use esp_idf_svc::hal::delay::FreeRtos;
+use esp_idf_svc::hal::io::Write;
+use esp_idf_svc::hal::peripherals::Peripherals;
+use esp_idf_svc::hal::sys::esp_deep_sleep;
 use esp_idf_svc::http::{self, server::EspHttpServer, Method};
 use esp_idf_svc::wifi::{BlockingWifi, EspWifi};
 use log::{error, info};
-use post_data::PostData;
+use url_encoded_data::UrlEncodedData;
 
 mod board {
     pub mod board;
@@ -22,19 +22,20 @@ mod board {
 }
 mod sensors {
     pub mod battery_sensor;
+    pub mod hcsr04_sensor;
     pub mod moisture_sensor;
 }
 mod configuration {
     pub mod main_configuration;
     pub mod nvs_configuration;
 }
-mod post_data;
+
 mod string_error;
 mod template;
 mod wifi_helper;
 
 fn main() -> anyhow::Result<()> {
-    esp_idf_hal::sys::link_patches();
+    esp_idf_svc::hal::sys::link_patches();
     esp_idf_svc::log::EspLogger::initialize_default();
 
     let peripherals = Peripherals::take()?;
@@ -68,7 +69,7 @@ fn main() -> anyhow::Result<()> {
             FreeRtos::delay_ms(100);
 
             if start.elapsed().unwrap().as_secs() >= 10 {
-                esp_idf_hal::reset::restart();
+                esp_idf_svc::hal::reset::restart();
             }
         }
     } else {
@@ -140,46 +141,36 @@ fn main_settings(
 
             match req.read(&mut buffer) {
                 Result::Ok(bytes_read) => {
-                    let post_data =
-                        PostData::from_string(String::from_utf8(buffer[0..bytes_read].to_vec())?);
+                    let post_str = String::from_utf8(buffer[0..bytes_read].to_vec())?;
+                    let post_data = UrlEncodedData::parse_str(&post_str);
+
                     let mut mainconfig_lock = mutex_config.lock().unwrap();
 
                     for elem in main_configuration::MAP_NVS_FORM {
-                        if post_data.is_key_exists(elem.form_name) {
-                            let data = post_data.read_value(&elem.form_name).unwrap();
+                        if post_data.exists(elem.form_name) {
+                            let data = post_data.get_first(&elem.form_name).unwrap();
 
                             match elem.data_type {
                                 main_configuration::MapFormType::String(_, max_size) => {
-                                    mainconfig_lock.store_string(
-                                        &elem.nvs_key,
-                                        data.as_str(),
-                                        max_size,
-                                    )?
+                                    mainconfig_lock.store_string(&elem.nvs_key, data, max_size)?
                                 }
 
                                 main_configuration::MapFormType::Float(_) => mainconfig_lock
-                                    .store_float(
-                                        &elem.nvs_key,
-                                        f32::from_str(data.as_str()).unwrap(),
-                                    )?,
+                                    .store_float(&elem.nvs_key, f32::from_str(data).unwrap())?,
 
                                 main_configuration::MapFormType::U32Hex(_) => mainconfig_lock
                                     .store_u32(
                                         &elem.nvs_key,
-                                        u32::from_str_radix(data.as_str(), 16).unwrap(),
+                                        u32::from_str_radix(data, 16).unwrap(),
                                     )?,
 
-                                main_configuration::MapFormType::Unsigned64(_) => mainconfig_lock
-                                    .store_u64(
-                                    &elem.nvs_key,
-                                    u64::from_str(data.as_str()).unwrap(),
-                                )?,
+                                main_configuration::MapFormType::Unsigned64(_) => {
+                                    mainconfig_lock
+                                        .store_u64(&elem.nvs_key, u64::from_str(data).unwrap())?
+                                }
 
                                 main_configuration::MapFormType::Unsigned8(_) => mainconfig_lock
-                                    .store_u8(
-                                        &elem.nvs_key,
-                                        u8::from_str(data.as_str()).unwrap(),
-                                    )?,
+                                    .store_u8(&elem.nvs_key, u8::from_str(data).unwrap())?,
                             };
                         }
                     }
