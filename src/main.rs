@@ -137,7 +137,7 @@ fn main_settings(
         } else if len_body >= 256 {
             error_message = "Save error: Content-length too long.".to_string();
         } else {
-            let mut buffer = [0u8; 156];
+            let mut buffer = [0u8; 256];
 
             match req.read(&mut buffer) {
                 Result::Ok(bytes_read) => {
