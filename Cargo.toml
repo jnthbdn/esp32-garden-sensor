@@ -1,5 +1,5 @@
 [package]
-name = "esp-wifi-soil-moisture"
+name = "esp-wifi-garden-sensor"
 version = "0.1.0"
 authors = ["Jonathan BAUDIN <jjbaudin@gmail.com>"]
 edition = "2021"
@@ -7,7 +7,7 @@ resolver = "2"
 rust-version = "1.71"
 
 [[bin]]
-name = "esp-wifi-soil-moisture"
+name = "esp-wifi-garden-sensor"
 harness = false # do not use the built in cargo test harness -> resolve rust-analyzer errors
 
 [profile.release]
