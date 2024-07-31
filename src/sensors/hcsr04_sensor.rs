@@ -43,7 +43,7 @@ impl<'a, PEN: OutputPin, PTRIG: OutputPin, PECHO: InputPin> HCSR04Sensor<'a, PEN
         let delay = Delay::new_default();
 
         let _ = self.pin_enable.set_high();
-        delay.delay_ms(100);
+        delay.delay_ms(500);
 
         let _ = self.pin_trigger.set_high();
         delay.delay_us(5);
@@ -52,7 +52,6 @@ impl<'a, PEN: OutputPin, PTRIG: OutputPin, PECHO: InputPin> HCSR04Sensor<'a, PEN
         let result = self.measure_echo_pulse();
 
         let _ = self.pin_enable.set_low();
-        delay.delay_ms(100);
 
         result
     }
