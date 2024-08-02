@@ -41,6 +41,7 @@ input[type="submit"]:disabled{opacity: 0.3;}
 <label for="pass">Passphrase: </label><div class="postfix"><input type="password" id="pass" name="pass" value="{PASS}" placeholder="Passphrase" maxlength="63"/><span><a onclick="show_hide('pass')" title="Show/Hide password" style="cursor: pointer;">👁️</a></span></div><br/>
 <label for="name">Name: </label><input type="text" name="name" value="{NAME}" maxlength="32" required/><br/>
 <label for="id">ID: </label><div class="prefix"><span>0x</span><input type="text" name="id" value="{ID}" maxlength="8" pattern="^[0-9ABCDEFabcdef]{1,8}$" required/></div><br/>
+<label for="srvaddr">Server address: </label><input type="text" name="srvaddr" value="{SRVADDR}" maxlength="128" required/><br/>
 </div>
 <div class="tab_content">
 {FORM_SETTINGS}
