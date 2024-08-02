@@ -25,16 +25,19 @@ impl<'a> Sensors<'a> {
         );
 
         #[cfg(feature = "moisture-sensor")]
-        map.insert(
-            "moisture".to_string(),
-            json!(self.moisture_sensor.get_level()),
-        );
+        map.insert("level".to_string(), json!(self.moisture_sensor.get_level()));
 
         #[cfg(feature = "water-level-sensor")]
-        map.insert(
-            "water_level".to_string(),
-            json!({ "mm": self.water_level_sensor.get_distance_mm(),"level": self.water_level_sensor.get_level() }),
-        );
+        {
+            map.insert(
+                "level".to_string(),
+                json!(self.water_level_sensor.get_level()),
+            );
+            map.insert(
+                "raw".to_string(),
+                json!(self.water_level_sensor.get_distance_mm()),
+            );
+        }
 
         Value::Object(map)
     }
