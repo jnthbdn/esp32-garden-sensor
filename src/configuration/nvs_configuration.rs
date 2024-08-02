@@ -14,13 +14,17 @@ const PAD_CHAR: char = 0x03 as char;
 
 pub const KEY_SSID: &str = "SSID";
 pub const KEY_PASSPHRASE: &str = "PASS";
+pub const KEY_SERVER_ADDRESS: &str = "SRVADDR";
 pub const KEY_ID: &str = "ID";
 pub const KEY_NAME: &str = "NAME";
 pub const KEY_SLEEP: &str = "SLEEP";
 pub const KEY_TX_POWER: &str = "TX_POWER";
 
-pub const KEY_VHIGH: &str = "VHIGH";
-pub const KEY_VLOW: &str = "VLOW";
+pub const KEY_MOIST_VHIGH: &str = "MVHIGH";
+pub const KEY_MOIST_VLOW: &str = "MVLOW";
+
+pub const KEY_WATER_HIGH: &str = "WATERHIGH";
+pub const KEY_WATER_LOW: &str = "WATERLOW";
 
 pub struct NvsConfiguration {
     nvs: EspNvs<NvsCustom>,
@@ -61,6 +65,10 @@ impl NvsConfiguration {
         self.read_u32(KEY_ID, 0)
     }
 
+    pub fn get_server_address(&self) -> String {
+        self.read_string(KEY_SERVER_ADDRESS, "192.168.70.1")
+    }
+
     pub fn get_deep_sleep_duration(&self) -> u64 {
         self.read_u64(KEY_SLEEP, 3600_000_000)
     }
@@ -70,11 +78,19 @@ impl NvsConfiguration {
     }
 
     pub fn get_vhigh_moisture(&self) -> f32 {
-        self.read_float(KEY_VHIGH, 0.0)
+        self.read_float(KEY_MOIST_VHIGH, 0.0)
     }
 
     pub fn get_vlow_moisture(&self) -> f32 {
-        self.read_float(KEY_VLOW, 0.0)
+        self.read_float(KEY_MOIST_VLOW, 0.0)
+    }
+
+    pub fn get_high_water_level(&self) -> f32 {
+        self.read_float(KEY_WATER_HIGH, 0.0)
+    }
+
+    pub fn get_low_water_level(&self) -> f32 {
+        self.read_float(KEY_WATER_LOW, 0.0)
     }
 
     pub fn store_string(
