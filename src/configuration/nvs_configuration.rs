@@ -100,6 +100,9 @@ impl NvsConfiguration {
         max_size: usize,
     ) -> Result<(), StringEspError> {
         self.nvs
+            .remove(key)
+            .map_err(|e| StringEspError("Failed to erase key", e))?;
+        self.nvs
             .set_str(key, &Self::trunc_pad_string(value, max_size))
             .map_err(|e| StringEspError("Failed to store string", e))
     }
@@ -129,6 +132,9 @@ impl NvsConfiguration {
     pub fn store_float(&mut self, key: &str, value: f32) -> Result<(), StringEspError> {
         let val = u32::from_ne_bytes(value.to_ne_bytes());
         self.nvs
+            .remove(key)
+            .map_err(|e| StringEspError("Failed to erase key", e))?;
+        self.nvs
             .set_u32(key, val)
             .map_err(|e| StringEspError("Failed to store float", e))
     }
@@ -142,6 +148,9 @@ impl NvsConfiguration {
 
     pub fn store_u8(&mut self, key: &str, value: u8) -> Result<(), StringEspError> {
         self.nvs
+            .remove(key)
+            .map_err(|e| StringEspError("Failed to erase key", e))?;
+        self.nvs
             .set_u8(key, value)
             .map_err(|e| StringEspError("Failed to store U8", e))
     }
@@ -152,6 +161,9 @@ impl NvsConfiguration {
 
     pub fn store_u32(&mut self, key: &str, value: u32) -> Result<(), StringEspError> {
         self.nvs
+            .remove(key)
+            .map_err(|e| StringEspError("Failed to erase key", e))?;
+        self.nvs
             .set_u32(key, value)
             .map_err(|e| StringEspError("Failed to store U32", e))
     }
@@ -161,6 +173,9 @@ impl NvsConfiguration {
     }
 
     pub fn store_u64(&mut self, key: &str, value: u64) -> Result<(), StringEspError> {
+        self.nvs
+            .remove(key)
+            .map_err(|e| StringEspError("Failed to erase key", e))?;
         self.nvs
             .set_u64(key, value)
             .map_err(|e| StringEspError("Failed to store U64", e))
