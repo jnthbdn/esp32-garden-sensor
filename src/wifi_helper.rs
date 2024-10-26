@@ -31,20 +31,60 @@ pub fn connect_wifi<'a>(
 
     let mut wifi = BlockingWifi::wrap(EspWifi::new(modem, sys_loop.clone(), Some(nvs))?, sys_loop)?;
 
+    // let cc = wifi_country_t {
+    //     cc: [b'F' as i8, b'R' as i8, 0 as i8],
+    //     schan: 1,
+    //     nchan: 14,
+    //     max_tx_power: 80,
+    //     ..Default::default()
+    // };
+
+    // esp!(unsafe { esp_wifi_set_country(&cc) })?;
+
     wifi.set_configuration(&wifi_configuration)?;
 
-    wifi.start()?;
-    info!("Wifi started");
+    for i in 1..=5 {
+        log::info!("Wifi connection attempt #{i}");
+        let _ = wifi.disconnect();
 
-    unsafe {
-        esp_wifi_set_max_tx_power(config.get_tx_power());
+        // unsafe {
+        //     esp_wifi_set_max_tx_power(config.get_tx_power());
+        // }
+
+        match wifi.start() {
+            Ok(_) => (),
+            Err(e) => {
+                if i == 5 {
+                    return Err(e.into());
+                }
+                continue;
+            }
+        }
+        info!("Wifi started");
+
+        match wifi.connect() {
+            Ok(_) => (),
+            Err(e) => {
+                if i == 5 {
+                    return Err(e.into());
+                }
+                continue;
+            }
+        }
+        info!("Wifi connected");
+
+        match wifi.wait_netif_up() {
+            Ok(_) => (),
+            Err(e) => {
+                if i == 5 {
+                    return Err(e.into());
+                }
+                continue;
+            }
+        }
+        info!("Wifi netif up");
+        break;
     }
-
-    wifi.connect()?;
-    info!("Wifi connected");
-
-    wifi.wait_netif_up()?;
-    info!("Wifi netif up");
 
     Ok(wifi)
 }
@@ -92,13 +132,45 @@ pub fn create_ap<'a>(
             ssid_hidden: false,
             auth_method: AuthMethod::None,
             max_connections: 5,
-            channel: 11,
+            channel: 1,
             ..Default::default()
         },
     );
 
+    log::info!("Set configuration");
     wifi.set_configuration(&wifi_configuration)?;
-    wifi.start()?;
 
+    for i in 1..=5 {
+        log::info!("WiFi starting attempt #{i}");
+
+        let _ = wifi.disconnect();
+
+        log::info!("Start WiFi");
+        match wifi.start() {
+            Ok(_) => (),
+            Err(e) => {
+                log::error!("Failed: {e}");
+
+                if i == 5 {
+                    return Err(e.into());
+                }
+                continue;
+            }
+        }
+
+        // log::info!("Wait netif up");
+        // match wifi.wait_netif_up() {
+        //     Ok(_) => (),
+        //     Err(e) => {
+        //         log::error!("Failed: {e}");
+
+        //         if i == 5 {
+        //             return Err(e.into());
+        //         }
+
+        //         continue;
+        //     }
+        // }
+    }
     Ok(wifi)
 }

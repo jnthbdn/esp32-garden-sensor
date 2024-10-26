@@ -36,8 +36,8 @@ pub const MAP_NVS_FORM: &[MapFormElement] = &[
     MapFormElement {
         nvs_key: &KEY_SERVER_ADDRESS,
         form_name: "srvaddr",
-        template_id: Some("{ARVADDR}"),
-        data_type: MapFormType::String("", 128),
+        template_id: Some("{SRVADDR}"),
+        data_type: MapFormType::String("192.168.70.1", 128),
     },
     MapFormElement {
         nvs_key: &KEY_NAME,
