@@ -4,6 +4,9 @@ use esp_idf_svc::hal::{
     delay::Delay,
     gpio::{Input, InputPin, Output, OutputPin, PinDriver},
 };
+use serde_json::json;
+
+use super::sensor::Sensor;
 
 const HALF_SPEED_SOUND: f32 = 170.0;
 
@@ -87,5 +90,22 @@ impl<'a, PEN: OutputPin, PTRIG: OutputPin, PECHO: InputPin> HCSR04Sensor<'a, PEN
 
         let slope: f32 = 100.0 / (self.dist_high - self.dist_low);
         (slope * (dist_mm - self.dist_low)).clamp(0.0, 100.0)
+    }
+}
+
+impl<'a, PEN: OutputPin, PTRIG: OutputPin, PECHO: InputPin> Sensor
+    for HCSR04Sensor<'a, PEN, PTRIG, PECHO>
+{
+    fn add_json_value(&mut self, map: &mut serde_json::Map<String, serde_json::Value>) {
+        map.insert("level".to_string(), json!(self.get_level()));
+        map.insert("measure".to_string(), json!(self.get_distance_mm()));
+    }
+
+    fn pretty_print(&mut self) -> String {
+        format!(
+            "Water level: {}% (measure: {} mm)",
+            self.get_level(),
+            self.get_distance_mm()
+        )
     }
 }
