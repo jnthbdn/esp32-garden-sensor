@@ -44,6 +44,7 @@ input[type="submit"]:disabled{opacity: 0.3;}
 <label for="srvaddr">Server address: </label><input type="text" name="srvaddr" value="{SRVADDR}" maxlength="128" required/><br/>
 </div>
 <div class="tab_content">
+<div>Sensor value: <pre>{SENSOR_VALUE}</pre></div>
 {FORM_SETTINGS}
 </div>
 <div class="tab_content">
@@ -60,7 +61,7 @@ function show_hide(i){let t=getById(i);t.type=(t.type=="password")?"text":"passw
 function opentab(n){let tab = Array.from(getByClass("tab"));let content = Array.from(getByClass("tab_content"));tab.forEach((x) => x.classList.remove("open"));tab[n].classList.add("open");content.forEach((x) => x.style.display="none");content[n].style.display = "block";}
 function option_index(a,val){for(let i=0;i<a.length;i++){if(a.at(i).value==val){return i;}};return a.length-1;}
 function load_ssid(aps,val){ let s=getById("ssid_list");s.innerHTML="";for(i of aps){s.innerHTML += `<option value="${i.ssid}">${i.ssid} [${i.rssi} dB]</option>`};s.innerHTML += `<option value="">Hidden network...</option>`;s.selectedIndex=option_index(Array.from(s.options),val);s.onchange()}
-function select_change(s){let ipt=getById("ssid");if(s.selectedIndex==s.length-1){ipt.style.display="block";ipt.value=""}else{ipt.style.display="none";ipt.value=s.value;}}
+function select_change(s){let ipt=getById("ssid");if(s.selectedIndex==s.length-1){ipt.style.display="block";}else{ipt.style.display="none";ipt.value=s.value;}}
 opentab(0);document.addEventListener("DOMContentLoaded", () => setTimeout(function(){let e="{ERROR_MSG}";if(e){alert(e);};load_ssid({AP_LIST},"{SSID}");},500));Array.from(getByClass("tab_content")).forEach((x, i)=>{x.setAttribute("tab_id",i);});Array.from(document.getElementsByTagName("input")).forEach((x)=>x.addEventListener("invalid",()=>opentab(x.closest(".tab_content").getAttribute("tab_id"))));
 </script>
 </body>
